@@ -4,11 +4,13 @@ import type { DragEvent, ChangeEvent } from "react";
 import { Check, ChevronRight, Loader, Plus, X } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { pdfToRawTextData, type pdfToRawTextDataRes } from "./lib/pdf";
+import { parseRawDataToSituazioniVisura, type iVisura } from "./lib/visura";
 
 type DroppedFile = {
   _id: string;
   file: File;
-  rawData: pdfToRawTextDataRes[] | null;
+  rawData?: pdfToRawTextDataRes[];
+  refinedData?: iVisura;
   isLoading: boolean;
 };
 
@@ -39,7 +41,6 @@ export default function App() {
         (file) => ({
           _id: generateId(),
           file,
-          rawData: null,
           isLoading: false,
         })
       );
@@ -54,7 +55,6 @@ export default function App() {
         (file) => ({
           _id: generateId(),
           file,
-          rawData: null,
           isLoading: false,
         })
       );
@@ -79,10 +79,14 @@ export default function App() {
     for (const file of droppedFiles) {
       const rawData = await pdfToRawTextData(file.file);
 
+      const refinedData = parseRawDataToSituazioniVisura(rawData);
+
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>
         prev.map((f) =>
-          f._id === file._id ? { ...f, rawData, isLoading: false } : f
+          f._id === file._id
+            ? { ...f, rawData, isLoading: false, refinedData }
+            : f
         )
       );
     }
@@ -153,7 +157,10 @@ export default function App() {
               >
                 <X />
               </Button>
-              <span>{fileObj.file.name}</span>
+              <div className="flex flex-col">
+                <span>{fileObj.file.name}</span>
+                <span>{fileObj.refinedData?.numero}</span>
+              </div>
               <div className="ml-auto">
                 {fileObj.isLoading && <Loader className="animate-spin" />}
 
