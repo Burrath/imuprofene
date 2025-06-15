@@ -81,6 +81,8 @@ export default function App() {
 
       const refinedData = parseRawDataToSituazioniVisura(rawData);
 
+      console.log(refinedData);
+
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>
         prev.map((f) =>

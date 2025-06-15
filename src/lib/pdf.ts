@@ -25,17 +25,18 @@ export async function pdfToRawTextData(file: File) {
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const content = await page.getTextContent();
+    const viewport = page.getViewport({ scale: 1 }); // ottieni altezza della pagina
+    const pageHeight = viewport.height;
 
     for (const item of content.items as any[]) {
       const transform = item.transform; // [a, b, c, d, e, f]
       const x = transform[4];
       const y = transform[5];
 
-      if (!item.str || !item.str.trim()) continue;
-
       const startX = x;
-      const endX = x + item.width; // width from PDF rendering
+      const endX = x + item.width;
       const avgX = (startX + endX) / 2;
+      const invertedY = pageHeight - y;
 
       result.push({
         page: pageNum,
@@ -43,7 +44,7 @@ export async function pdfToRawTextData(file: File) {
         startX,
         endX,
         avgX,
-        y,
+        y: invertedY + pageNum * pageHeight,
       });
     }
   }
