@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Edit,
   Eye,
+  Flame,
   Loader,
   Plus,
   Recycle,
@@ -229,19 +230,20 @@ export default function App() {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className="h-screen w-screen relative space-y-4 flex flex-col"
+      className="h-screen w-screen relative space-y-4 flex flex-"
     >
-      {isDragging && (
-        <div className="absolute rounded inset-0 flex items-center justify-center border-blue-500 bg-blue-100 border-5 pointer-events-none">
-          <div className="flex items-center justify-center">
-            <p>Drop like it's hot 🔥</p>
-          </div>
+      {isDragging && <></>}
+      <div className="absolute rounded inset-0 m-5 flex items-center justify-center border-blue-500 bg-blue-100 border-5 border-dashed pointer-events-none">
+        <div className="flex items-center justify-center">
+          <p className="font-semibold text-5xl flex items-center gap-5">
+            Drop like it's hot <Flame size={50} fill="red" />
+          </p>
         </div>
-      )}
+      </div>
 
       <div className="flex gap-3 m-5">
         <Button
-          size={"lg"}
+          size={"sm"}
           variant={"outline"}
           className="rounded-full"
           onClick={openFileSelector}
@@ -252,13 +254,18 @@ export default function App() {
         <Button
           disabled={!droppedFiles.length}
           onClick={runExtract}
-          size={"lg"}
+          size={"sm"}
         >
           <Upload />
           <ChevronRight />
         </Button>
 
-        <Button disabled={!droppedFiles.length} onClick={runCalc} size={"lg"}>
+        <Button disabled={!droppedFiles.length} size={"sm"}>
+          <Edit />
+          <ChevronRight />
+        </Button>
+
+        <Button disabled={!droppedFiles.length} onClick={runCalc} size={"sm"}>
           <Calculator />
           <ChevronRight />
         </Button>
@@ -332,10 +339,6 @@ export default function App() {
                           {fileObj.refinedData.comune} (
                           {fileObj.refinedData.codiceComune})
                         </p>
-
-                        <Button size={"sm"} variant={"outline"}>
-                          Aliquote <Edit />
-                        </Button>
                       </div>
 
                       <SituazioniTableComponent data={fileObj.refinedData} />
