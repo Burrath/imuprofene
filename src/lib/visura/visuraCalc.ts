@@ -79,7 +79,7 @@ export function calculateImu(visura: iVisura): iImuYearData {
 
     for (
       let day = new Date(end);
-      day >= start;
+      day > start;
       day.setDate(day.getDate() - 1)
     ) {
       const relevantSitua = getSituazioneOfASpecificDate(
