@@ -29,8 +29,8 @@ export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
           <tr>
             <th className="border px-4 py-2">Anno</th>
             <th className="border px-4 py-2">Rendita</th>
-            <th className="border px-4 py-2">IMU</th>
             <th className="border px-4 py-2">Aliquote</th>
+            <th className="border px-4 py-2">IMU</th>
           </tr>
         </thead>
         <tbody>
@@ -41,10 +41,10 @@ export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
                 € {imuData[year].rendita.toFixed(2)}
               </td>
               <td className="border px-4 py-2">
-                € {imuData[year].imu.toFixed(2)}
+                {imuData[year].aliquote.join(",")}
               </td>
               <td className="border px-4 py-2">
-                {imuData[year].aliquote.join(",")}
+                € {imuData[year].imu.toFixed(2)}
               </td>
             </tr>
           ))}
