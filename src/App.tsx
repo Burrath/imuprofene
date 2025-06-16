@@ -1,14 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { DragEvent, ChangeEvent } from "react";
 
-import {
-  ChevronRight,
-  Eye,
-  Loader,
-  Plus,
-  Recycle,
-  X,
-} from "lucide-react";
+import { ChevronRight, Eye, Loader, Plus, Recycle, X } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { pdfToRawTextData } from "./lib/pdf";
 import type { iImuYearData, iVisura } from "./lib/visura/visuraInterfaces";
@@ -79,7 +72,7 @@ export function SituazioniTableComponent({ data }: { data: iVisura }) {
         <thead className="bg-gray-100">
           <tr>
             <th className="border px-4 py-2">Dal</th>
-            <th className="border px-4 py-2">Unità (foglio/particella/sub)</th>
+            <th className="border px-4 py-2">Unità (foglio-particella-sub)</th>
             <th className="border px-4 py-2">Categoria</th>
             <th className="border px-4 py-2">Rendita</th>
             <th className="border px-4 py-2">Tipo</th>
@@ -97,9 +90,7 @@ export function SituazioniTableComponent({ data }: { data: iVisura }) {
                   situazione.unità
                     .map(
                       (u) =>
-                        `Foglio ${u.foglio ?? ""}, Particella ${
-                          u.particella ?? ""
-                        }, Sub ${u.sub ?? ""}`
+                        `${u.foglio ?? ""}-${u.particella ?? ""}-${u.sub ?? ""}`
                     )
                     .join(" | ")}
               </td>
