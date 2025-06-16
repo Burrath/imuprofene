@@ -20,6 +20,33 @@ function getVisuraNumberFromRawData(rawData: pdfToRawTextDataRes[]): string {
   return numero;
 }
 
+function getComuneAndCodiceFromRawData(rawData: pdfToRawTextDataRes[]): {
+  comune: string;
+  codice: string;
+} {
+  let comune = "";
+  let codice = "";
+
+  const textRaw = rawData.find((e) =>
+    e.text.toLowerCase().includes("comune di")
+  );
+
+  const comuneRawText = textRaw?.text;
+
+  if (comuneRawText) {
+    const match = comuneRawText.match(
+      /Comune di\s+([\wÀ-Ù\s']+)\s*\(\s*Codice\s*:\s*([A-Z0-9]+)\s*\)/i
+    );
+
+    if (match) {
+      comune = match[1].trim();
+      codice = match[2].trim();
+    }
+  }
+
+  return { comune, codice };
+}
+
 function getSituazioniFromRawData(
   rawData: pdfToRawTextDataRes[]
 ): iSituazioneVisura[] {
@@ -225,10 +252,13 @@ export function parseRawDataToSituazioniVisura(
   rawData: pdfToRawTextDataRes[]
 ): iVisura {
   // get the visura number
-  let numero = getVisuraNumberFromRawData(rawData);
+  const numero = getVisuraNumberFromRawData(rawData);
+
+  // get the comune
+  const { comune, codice } = getComuneAndCodiceFromRawData(rawData);
 
   // get the situazioni
   const situazioni = getSituazioniFromRawData(rawData);
 
-  return { numero, situazioni };
+  return { numero, situazioni, comune, codiceComune: codice };
 }

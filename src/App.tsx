@@ -52,7 +52,10 @@ export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
 export function SituazioniTableComponent({ data }: { data: iVisura }) {
   return (
     <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Numero visura: {data.numero}</h2>
+      <h2 className="text-xl font-bold mb-4">
+        Numero visura: {data.numero} / Comune: {data.comune} (
+        {data.codiceComune})
+      </h2>
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           <tr>

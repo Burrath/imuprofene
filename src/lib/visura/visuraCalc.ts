@@ -1,3 +1,4 @@
+import { getIMUMultiplier } from "./imuMultiplier";
 import {
   SITUAZIONE_TYPE,
   type iImuYearData,
@@ -47,8 +48,12 @@ function getSituazioneOfASpecificDate(
   }
 }
 
-function getImuCalculation(rendita: number, categoria: string) {
-  return -1;
+function getImuCalculation(situazione: iSituazioneVisura) {
+  if (!situazione.categoria) return 0;
+
+  const IMUmultiplier = getIMUMultiplier(situazione.categoria);
+
+  return IMUmultiplier ?? 0;
 }
 
 export function calculateImu(visura: iVisura): iImuYearData {
@@ -82,10 +87,12 @@ export function calculateImu(visura: iVisura): iImuYearData {
         visura.situazioni
       );
 
+      if (!relevantSitua) continue;
+
       result[year] = {
         imu:
           (result[year]?.imu ?? 0) +
-          getImuCalculation(relevantSitua?.rendita ?? 0, "") / daysInYear,
+          getImuCalculation(relevantSitua) / daysInYear,
         rendita:
           (result[year]?.rendita ?? 0) +
           (relevantSitua?.rendita ?? 0) / daysInYear,
