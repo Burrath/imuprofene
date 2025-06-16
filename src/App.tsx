@@ -200,7 +200,6 @@ export default function App() {
                 </Button>
                 <div className="flex flex-col">
                   <span>{fileObj.file.name}</span>
-                  <span>{fileObj.refinedData?.numero}</span>
                 </div>
                 <div className="ml-auto">
                   {fileObj.isLoading && <Loader className="animate-spin" />}
