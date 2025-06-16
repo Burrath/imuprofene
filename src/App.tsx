@@ -39,13 +39,25 @@ export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
             <tr key={year}>
               <td className="border px-4 py-2">{year}</td>
               <td className="border px-4 py-2">
-                € {imuData[year].rendita.toFixed(2)}
+                {imuData[year].rendita < 0 ? (
+                  <X className="text-red-500 w-4 h-4" />
+                ) : (
+                  `€ ${imuData[year].rendita.toFixed(2)}`
+                )}
               </td>
               <td className="border px-4 py-2">
-                {imuData[year].aliquote.join(",")}
+                {imuData[year].aliquote.some((a) => a < 0) ? (
+                  <X className="text-red-500 w-4 h-4" />
+                ) : (
+                  imuData[year].aliquote.join(", ")
+                )}
               </td>
               <td className="border px-4 py-2">
-                € {imuData[year].imu.toFixed(2)}
+                {imuData[year].imu < 0 ? (
+                  <X className="text-red-500 w-4 h-4" />
+                ) : (
+                  `€ ${imuData[year].imu.toFixed(2)}`
+                )}
               </td>
             </tr>
           ))}
