@@ -1,7 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import type { DragEvent, ChangeEvent } from "react";
 
-import { ChevronRight, Eye, Loader, Plus, Recycle, X } from "lucide-react";
+import {
+  ChevronRight,
+  Edit,
+  Eye,
+  Loader,
+  Plus,
+  Recycle,
+  X,
+} from "lucide-react";
 import { Button } from "./components/ui/button";
 import { pdfToRawTextData } from "./lib/pdf";
 import type { iImuYearData, iVisura } from "./lib/visura/visuraInterfaces";
@@ -15,6 +23,44 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./components/ui/accordion";
+
+export function AliquoteModal({
+  years,
+  categorie,
+  onClose,
+}: {
+  years: number[];
+  categorie: string[];
+  onClose: Function;
+}) {
+  return (
+    <div className="p-3 bg-white rounded w-full max-w-md">
+      <h3 className="mb-3 text-lg font-semibold">Inserisci le aliquote</h3>
+
+      {years.map((y, key) => {
+        return (
+          <div className="mb-3" key={key}>
+            <span className="font-semibold">{y}</span>
+
+            {categorie.map((c, key) => (
+              <div className="flex items-center gap-3" key={key}>
+                <span className="text-nowrap">{c} :</span>
+                <input className="border w-full" type="number" />
+              </div>
+            ))}
+          </div>
+        );
+      })}
+
+      <div className="flex justify-between mt-8">
+        <Button onClick={() => onClose()} variant={"outline"}>
+          Cancel
+        </Button>
+        <Button>SET</Button>
+      </div>
+    </div>
+  );
+}
 
 export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
   const sortedYears = Object.keys(imuData)
@@ -125,6 +171,10 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [aliquoteComuni, setAliquoteComuni] = useState<iAliquoteComune>();
   const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
+  const [aliquoteModalConfig, setAliquoteModalConfig] = useState<{
+    years: number[];
+    categorie: string[];
+  }>();
 
   useEffect(() => {
     (async () => {
@@ -296,6 +346,35 @@ export default function App() {
                         <Eye />
                       </Button>
                       <Button
+                        disabled={!fileObj.refinedData}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setAliquoteModalConfig({
+                            years: [
+                              ...new Set(
+                                fileObj.refinedData?.situazioni
+                                  .map((s) => {
+                                    return s.dal?.getFullYear();
+                                  })
+                                  .filter((e) => e)
+                              ),
+                            ] as number[],
+                            categorie: [
+                              ...new Set(
+                                fileObj.refinedData?.situazioni
+                                  .map((s) => {
+                                    return s.categoria;
+                                  })
+                                  .filter((e) => e)
+                              ),
+                            ] as string[],
+                          })
+                        }
+                      >
+                        <Edit />
+                      </Button>
+                      <Button
                         onClick={() => removeFile(fileObj._id)}
                         variant={"ghost"}
                         className="text-red-600 ml-auto"
@@ -336,6 +415,16 @@ export default function App() {
         onChange={handleFileSelect}
         className="hidden"
       />
+
+      {aliquoteModalConfig && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center  h-screen w-screen p-5">
+          <AliquoteModal
+            onClose={() => setAliquoteModalConfig(undefined)}
+            years={aliquoteModalConfig.years}
+            categorie={aliquoteModalConfig.categorie}
+          />
+        </div>
+      )}
 
       {pdfModalFile && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center  h-screen w-screen p-5">
