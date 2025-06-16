@@ -48,25 +48,25 @@ export enum CATEGORIA_CATASTALE {
   TerreniAgricoliIscritti = "TerreniAgricoliIscritti",
 }
 
-export interface iUnitàVisura {
-  foglio: string;
-  particella: string;
-  sub: string;
-  categoria: string;
+export enum SITUAZIONE_TYPE {
+  RenditaProposta = "RenditaProposta", // da usare SOLO se è l'ultima in alto
+  RenditaNonRettificata = "RenditaNonRettificata", // da usare (non rettificata in 12 mesi quindi valida)
+  RenditaValidata = "RenditaValidata", // da usare
+  RenditaRettificata = "RenditaRettificata", // da usare (modifica rispetto alla proposta precendente)
 }
 
-export interface iRawUnitàVisura {
-  fogli: string[];
-  particelle: string[];
-  subs: string[];
-  categoria: string;
+export interface iUnitàVisura {
+  foglio?: string;
+  particella?: string;
+  sub?: string;
 }
 
 export interface iSituazioneVisura {
   dal?: Date;
+  type?: SITUAZIONE_TYPE;
   unità?: iUnitàVisura[];
-  rawUnità?: iRawUnitàVisura;
-  reddito: number;
+  categoria?: string;
+  reddito?: number;
 }
 
 export interface iVisura {
@@ -131,11 +131,6 @@ function getSituazioniFromRawData(
 
   // for each situazioni title let's build a situazione visura, extracting data for each tabla
   situazioniTitleRecord.forEach((titleRecord, index) => {
-    const situazione: iSituazioneVisura = {
-      unità: [],
-      rawUnità: {},
-    } as any;
-
     const getSituazioneDate = () => {
       // Extract date of the situazione (dd/mm/yy o dd/mm/yyyy)
       const match = titleRecord.text.match(/(\d{2})\/(\d{2})\/(\d{2,4})/);
@@ -214,16 +209,56 @@ function getSituazioniFromRawData(
       return 0;
     };
 
-    const getCategoria = (
+    const getUnità = (
+      foglioColRecord: pdfToRawTextDataRes[],
+      particellaColRecord: pdfToRawTextDataRes[],
+      subColRecord: pdfToRawTextDataRes[]
+    ) => {
+      const rowUnitàUnique = [
+        ...new Set([
+          ...foglioColRecord.map((e) => e.y),
+          ...particellaColRecord.map((e) => e.y),
+          ...subColRecord.map((e) => e.y),
+        ]),
+      ].sort();
+
+      const unità: iUnitàVisura[] = rowUnitàUnique.map((rowUnità) => {
+        const foglio = foglioColRecord.find((e) => e.y === rowUnità)?.text;
+        const particella = particellaColRecord.find(
+          (e) => e.y === rowUnità
+        )?.text;
+        const sub = subColRecord.find((e) => e.y === rowUnità)?.text;
+
+        return { foglio, particella, sub };
+      });
+
+      return unità;
+    };
+
+    const getSituazioneType = (
       relevantRecordFromSituazione: pdfToRawTextDataRes[]
     ) => {
       for (let i = 0; i < relevantRecordFromSituazione.length; i++) {
         const record = relevantRecordFromSituazione[i];
 
-        if (record.text.toLowerCase().includes("dominicale"))
-          return CATEGORIA_CATASTALE.Terreni;
+        const text = record.text.toLowerCase();
+
+        if (text.includes("valida") && text.includes("rendita"))
+          return SITUAZIONE_TYPE.RenditaValidata;
+
+        if (text.includes("rettific") && text.includes("rendita"))
+          return SITUAZIONE_TYPE.RenditaRettificata;
+
+        if (text.includes("propost") && text.includes("rendita"))
+          return SITUAZIONE_TYPE.RenditaProposta;
+
+        if (
+          text.includes("non") &&
+          text.includes("rettific") &&
+          text.includes("rendita")
+        )
+          return SITUAZIONE_TYPE.RenditaNonRettificata;
       }
-      return "";
     };
 
     // get relevant record only, keep all the row records releval to the situazione
@@ -234,18 +269,17 @@ function getSituazioniFromRawData(
     const foglioColRecord = getDataFromRecordColumn("foglio", sRecords);
     const particellaColRecord = getDataFromRecordColumn("particella", sRecords);
     const subColRecord = getDataFromRecordColumn("sub", sRecords);
+    const unità = getUnità(foglioColRecord, particellaColRecord, subColRecord);
     const rendita = getRendita(sRecords);
-    const categoria = getCategoria(sRecords);
+    const categoria = getDataFromRecordColumn("categoria", sRecords)[0]?.text;
+    const situazioneType = getSituazioneType(sRecords);
 
     const situa: iSituazioneVisura = {
       dal: date,
-      rawUnità: {
-        fogli: foglioColRecord.map((e) => e.text),
-        particelle: particellaColRecord.map((e) => e.text),
-        subs: subColRecord.map((e) => e.text),
-        categoria: categoria,
-      },
+      unità,
+      categoria,
       reddito: rendita,
+      type: situazioneType,
     };
 
     situazioni.push(situa);
