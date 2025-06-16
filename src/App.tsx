@@ -232,14 +232,17 @@ export default function App() {
       onDrop={handleDrop}
       className="h-screen w-screen relative space-y-4 flex flex-"
     >
-      {isDragging && <></>}
-      <div className="absolute rounded inset-0 m-5 flex items-center justify-center border-blue-500 bg-blue-100 border-5 border-dashed pointer-events-none">
-        <div className="flex items-center justify-center">
-          <p className="font-semibold text-5xl flex items-center gap-5">
-            Drop like it's hot <Flame size={50} fill="red" />
-          </p>
-        </div>
-      </div>
+      {isDragging && (
+        <>
+          <div className="absolute rounded inset-0 m-5 flex items-center justify-center border-blue-500 bg-blue-100 border-5 border-dashed pointer-events-none">
+            <div className="flex items-center justify-center">
+              <p className="font-semibold text-5xl flex items-center gap-5">
+                Drop like it's hot <Flame size={50} fill="red" />
+              </p>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="flex gap-3 m-5">
         <Button
