@@ -86,13 +86,17 @@ export function SituazioniTableComponent({ data }: { data: iVisura }) {
                   new Date(situazione.dal).toLocaleDateString()}
               </td>
               <td className="border px-4 py-2">
-                {situazione.unità &&
-                  situazione.unità
-                    .map(
-                      (u) =>
-                        `${u.foglio ?? ""}-${u.particella ?? ""}-${u.sub ?? ""}`
-                    )
-                    .join(" | ")}
+                {situazione.unità && (
+                  <div className="flex flex-col">
+                    {situazione.unità.map((u, key) => {
+                      return (
+                        <span key={key}>
+                          {u.foglio ?? ""}-{u.particella ?? ""}-{u.sub ?? ""}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </td>
               <td className="border px-4 py-2">{situazione.categoria}</td>
               <td className="border px-4 py-2">
