@@ -63,10 +63,14 @@ export interface iSituazioneVisura {
   type?: SITUAZIONE_TYPE;
   unità?: iUnitàVisura[];
   categoria?: string;
-  reddito?: number;
+  rendita?: number;
 }
 
 export interface iVisura {
   numero: string;
   situazioni: iSituazioneVisura[];
+}
+
+export interface iImuYearData {
+  [year: number]: { rendita: number; imu: number };
 }

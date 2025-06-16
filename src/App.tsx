@@ -1,13 +1,55 @@
 import { useState, useRef } from "react";
 import type { DragEvent, ChangeEvent } from "react";
 
-import { Check, ChevronRight, Loader, Plus, X } from "lucide-react";
+import {
+  Calculator,
+  ChevronRight,
+  Import,
+  Loader,
+  Plus,
+  X,
+} from "lucide-react";
 import { Button } from "./components/ui/button";
-import { pdfToRawTextData, type pdfToRawTextDataRes } from "./lib/pdf";
-import type { iVisura } from "./lib/visura/visuraInterfaces";
+import { pdfToRawTextData } from "./lib/pdf";
+import type { iImuYearData, iVisura } from "./lib/visura/visuraInterfaces";
 import { parseRawDataToSituazioniVisura } from "./lib/visura/visuraExtract";
+import { calculateImu } from "./lib/visura/visuraCalc";
 
-export function TableComponent({ data }: { data: iVisura }) {
+export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
+  const sortedYears = Object.keys(imuData)
+    .map(Number)
+    .sort((a, b) => b - a); // sort from newest to oldest
+
+  return (
+    <div className="mt-4">
+      <h3 className="text-lg font-semibold mb-2">Dati IMU</h3>
+      <table className="min-w-full border border-gray-300">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border px-4 py-2">Anno</th>
+            <th className="border px-4 py-2">Rendita</th>
+            <th className="border px-4 py-2">IMU</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedYears.map((year) => (
+            <tr key={year}>
+              <td className="border px-4 py-2">{year}</td>
+              <td className="border px-4 py-2">
+                € {imuData[year].rendita.toFixed(2)}
+              </td>
+              <td className="border px-4 py-2">
+                € {imuData[year].imu.toFixed(2)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function SituazioniTableComponent({ data }: { data: iVisura }) {
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Numero visura: {data.numero}</h2>
@@ -17,7 +59,7 @@ export function TableComponent({ data }: { data: iVisura }) {
             <th className="border px-4 py-2">Dal</th>
             <th className="border px-4 py-2">Unità (foglio/particella/sub)</th>
             <th className="border px-4 py-2">Categoria</th>
-            <th className="border px-4 py-2">Reddito</th>
+            <th className="border px-4 py-2">Rendita</th>
             <th className="border px-4 py-2">Tipo</th>
           </tr>
         </thead>
@@ -25,7 +67,8 @@ export function TableComponent({ data }: { data: iVisura }) {
           {data.situazioni.map((situazione, index) => (
             <tr key={index}>
               <td className="border px-4 py-2">
-                {new Date(situazione.dal ?? new Date()).toLocaleDateString()}
+                {situazione.dal &&
+                  new Date(situazione.dal).toLocaleDateString()}
               </td>
               <td className="border px-4 py-2">
                 {situazione.unità &&
@@ -39,7 +82,9 @@ export function TableComponent({ data }: { data: iVisura }) {
                     .join(" | ")}
               </td>
               <td className="border px-4 py-2">{situazione.categoria}</td>
-              <td className="border px-4 py-2">€ {situazione.reddito}</td>
+              <td className="border px-4 py-2">
+                € {situazione.rendita?.toFixed(2)}
+              </td>
               <td className="border px-4 py-2">{situazione.type}</td>
             </tr>
           ))}
@@ -52,8 +97,8 @@ export function TableComponent({ data }: { data: iVisura }) {
 type DroppedFile = {
   _id: string;
   file: File;
-  rawData?: pdfToRawTextDataRes[];
   refinedData?: iVisura;
+  imuData?: iImuYearData;
   isLoading: boolean;
 };
 
@@ -109,7 +154,31 @@ export default function App() {
     fileInputRef.current?.click();
   }
 
-  const run = async () => {
+  const runCalc = () => {
+    // Step 1: set all files to loading
+    setDroppedFiles((prev) =>
+      prev.map((file) => ({
+        ...file,
+        isLoading: true,
+      }))
+    );
+
+    // Step 2: process files one by one
+    for (const file of droppedFiles) {
+      if (!file.refinedData) continue;
+
+      const imuData = calculateImu(file.refinedData);
+
+      // Step 3: update only that file in state
+      setDroppedFiles((prev) =>
+        prev.map((f) =>
+          f._id === file._id ? { ...f, isLoading: false, imuData } : f
+        )
+      );
+    }
+  };
+
+  const runExtract = async () => {
     // Step 1: set all files to loading
     setDroppedFiles((prev) =>
       prev.map((file) => ({
@@ -154,18 +223,23 @@ export default function App() {
         </div>
       )}
 
-      <div>
+      <div className="flex gap-3 m-5">
         <Button
           size={"lg"}
           variant={"outline"}
-          className="rounded-full m-5"
+          className="rounded-full"
           onClick={openFileSelector}
         >
           <Plus />
         </Button>
 
-        <Button onClick={run} size={"lg"}>
+        <Button onClick={runExtract} size={"lg"}>
+          <Import />
           <ChevronRight />
+        </Button>
+
+        <Button onClick={runCalc} size={"lg"}>
+          <Calculator />
           <ChevronRight />
         </Button>
       </div>
@@ -206,18 +280,15 @@ export default function App() {
                 </div>
                 <div className="ml-auto">
                   {fileObj.isLoading && <Loader className="animate-spin" />}
-
-                  {!fileObj.isLoading && fileObj.rawData && (
-                    <>
-                      {!!fileObj.rawData.length && <Check />}{" "}
-                      {!fileObj.rawData.length && <X />}
-                    </>
-                  )}
                 </div>
               </div>
 
               {fileObj.refinedData && (
-                <TableComponent data={fileObj.refinedData} />
+                <SituazioniTableComponent data={fileObj.refinedData} />
+              )}
+
+              {fileObj.imuData && (
+                <ImuTableComponent imuData={fileObj.imuData} />
               )}
             </div>
           ))}

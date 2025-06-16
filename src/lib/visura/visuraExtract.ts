@@ -211,7 +211,7 @@ function getSituazioniFromRawData(
       dal: date,
       unità,
       categoria,
-      reddito: rendita,
+      rendita: rendita,
       type: situazioneType,
     };
 
