@@ -27,5 +27,5 @@ export interface iVisura {
 }
 
 export interface iImuYearData {
-  [year: number]: { rendita: number; imu: number };
+  [year: number]: { rendita: number; imu: number; aliquote: number[] };
 }

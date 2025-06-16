@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { DragEvent, ChangeEvent } from "react";
 
 import {
@@ -14,6 +14,7 @@ import { pdfToRawTextData } from "./lib/pdf";
 import type { iImuYearData, iVisura } from "./lib/visura/visuraInterfaces";
 import { parseRawDataToSituazioniVisura } from "./lib/visura/visuraExtract";
 import { calculateImu } from "./lib/visura/visuraCalc";
+import type { iAliquoteComune } from "./lib/visura/aliquota";
 
 export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
   const sortedYears = Object.keys(imuData)
@@ -29,6 +30,7 @@ export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
             <th className="border px-4 py-2">Anno</th>
             <th className="border px-4 py-2">Rendita</th>
             <th className="border px-4 py-2">IMU</th>
+            <th className="border px-4 py-2">Aliquote</th>
           </tr>
         </thead>
         <tbody>
@@ -40,6 +42,9 @@ export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
               </td>
               <td className="border px-4 py-2">
                 € {imuData[year].imu.toFixed(2)}
+              </td>
+              <td className="border px-4 py-2">
+                {imuData[year].aliquote.join(",")}
               </td>
             </tr>
           ))}
@@ -110,6 +115,17 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [aliquoteComuni, setAliquoteComuni] = useState<iAliquoteComune>();
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/aliquote-comuni.json");
+      const data: iAliquoteComune = await res.json();
+
+      setAliquoteComuni(data);
+    })();
+  }, []);
+
   function generateId() {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   }
@@ -157,7 +173,7 @@ export default function App() {
     fileInputRef.current?.click();
   }
 
-  const runCalc = () => {
+  const runCalc = async () => {
     // Step 1: set all files to loading
     setDroppedFiles((prev) =>
       prev.map((file) => ({
@@ -168,9 +184,9 @@ export default function App() {
 
     // Step 2: process files one by one
     for (const file of droppedFiles) {
-      if (!file.refinedData) continue;
+      if (!file.refinedData || !aliquoteComuni) continue;
 
-      const imuData = calculateImu(file.refinedData);
+      const imuData = await calculateImu(file.refinedData, aliquoteComuni);
 
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>

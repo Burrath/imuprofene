@@ -3,7 +3,7 @@ import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 // Imposta il worker
 // import pkg from "pdfjs-dist/package.json";
 // GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pkg.version}/build/pdf.worker.min.mjs`;
-GlobalWorkerOptions.workerSrc = `http://localhost:5173/pdf-js-worker.js`;
+GlobalWorkerOptions.workerSrc = `/pdf-js-worker.js`;
 
 export interface pdfToRawTextDataRes {
   page: number;

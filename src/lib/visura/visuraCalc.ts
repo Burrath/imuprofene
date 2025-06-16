@@ -1,4 +1,4 @@
-import getAliquotaFromComune from "./aliquota";
+import getAliquotaFromComune, { type iAliquoteComune } from "./aliquota";
 import {
   SITUAZIONE_TYPE,
   type iImuYearData,
@@ -50,15 +50,12 @@ function getSituazioneOfASpecificDate(
 
 export function getImuCalculation(
   situazione: iSituazioneVisura,
-  comune: string
+  aliquota: number
 ): number {
   if (!situazione.categoria || !situazione.rendita) return 0;
 
   const categoria = situazione.categoria.toUpperCase();
   const rendita = situazione.rendita;
-
-  // Aliquota temporaneamente fissa a 1%
-  const aliquota = getAliquotaFromComune(comune);
 
   // Coefficienti in base alla categoria catastale
   const coefficienti: { [key: string]: number } = {
@@ -87,7 +84,10 @@ export function getImuCalculation(
   return Math.round(imu * 100) / 100;
 }
 
-export function calculateImu(visura: iVisura): iImuYearData {
+export function calculateImu(
+  visura: iVisura,
+  aliquoteComuni: iAliquoteComune
+): iImuYearData {
   const currentYear = new Date().getFullYear();
   const minYear = Math.min(
     ...visura.situazioni
@@ -102,7 +102,7 @@ export function calculateImu(visura: iVisura): iImuYearData {
 
   const result: iImuYearData = {};
 
-  years.forEach((year) => {
+  years.forEach(async (year) => {
     const start = new Date(year, 0, 1); // January 1st of the year
     const end = new Date(year + 1, 0, 1); // December 31st of the year
 
@@ -114,15 +114,32 @@ export function calculateImu(visura: iVisura): iImuYearData {
         visura.situazioni
       );
 
-      if (!relevantSitua) continue;
+      if (!relevantSitua || !relevantSitua.categoria) continue;
+
+      const aliquota = getAliquotaFromComune(
+        visura.comune,
+        relevantSitua.categoria,
+        year.toString(),
+        aliquoteComuni
+      );
+
+      const imuCalc =
+        aliquota > 0 ? getImuCalculation(relevantSitua, aliquota) : -1;
+
+      const imu = (result[year]?.imu ?? 0) + imuCalc / daysInYear;
+
+      const rendita =
+        (result[year]?.rendita ?? 0) +
+        (relevantSitua?.rendita ?? 0) / daysInYear;
+
+      const aliquote = [
+        ...new Set([...(result[year]?.aliquote ?? []), aliquota]),
+      ];
 
       result[year] = {
-        imu:
-          (result[year]?.imu ?? 0) +
-          getImuCalculation(relevantSitua, visura.comune) / daysInYear,
-        rendita:
-          (result[year]?.rendita ?? 0) +
-          (relevantSitua?.rendita ?? 0) / daysInYear,
+        imu,
+        rendita,
+        aliquote,
       };
     }
   });
