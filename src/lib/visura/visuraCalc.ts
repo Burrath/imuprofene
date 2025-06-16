@@ -48,7 +48,7 @@ function getSituazioneOfASpecificDate(
 }
 
 function getImuCalculation(rendita: number, categoria: string) {
-  return rendita;
+  return -1;
 }
 
 export function calculateImu(visura: iVisura): iImuYearData {
@@ -82,13 +82,14 @@ export function calculateImu(visura: iVisura): iImuYearData {
         visura.situazioni
       );
 
-      result[year].imu =
-        (result[year].imu ?? 0) +
-        getImuCalculation(relevantSitua?.rendita ?? 0, "") / daysInYear;
-
-      result[year].rendita =
-        (result[year].rendita ?? 0) +
-        (relevantSitua?.rendita ?? 0) / daysInYear;
+      result[year] = {
+        imu:
+          (result[year]?.imu ?? 0) +
+          getImuCalculation(relevantSitua?.rendita ?? 0, "") / daysInYear,
+        rendita:
+          (result[year]?.rendita ?? 0) +
+          (relevantSitua?.rendita ?? 0) / daysInYear,
+      };
     }
   });
 
