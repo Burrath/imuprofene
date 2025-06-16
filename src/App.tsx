@@ -4,6 +4,7 @@ import type { DragEvent, ChangeEvent } from "react";
 import {
   Calculator,
   ChevronRight,
+  Eye,
   Import,
   Loader,
   Plus,
@@ -114,8 +115,8 @@ export default function App() {
   const [droppedFiles, setDroppedFiles] = useState<DroppedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [aliquoteComuni, setAliquoteComuni] = useState<iAliquoteComune>();
+  const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -283,7 +284,7 @@ export default function App() {
         <div className="flex flex-col gap-3 px-3">
           {droppedFiles.map((fileObj) => (
             <div
-              className="border rounded p-3 bg-gray-50 flex flex-col gap-3"
+              className="border-2 border-slate-600 rounded p-3 bg-gray-50 flex flex-col gap-3"
               key={fileObj._id}
             >
               <div className="flex flex-row gap-3 items-center">
@@ -297,6 +298,13 @@ export default function App() {
                 <div className="flex flex-col">
                   <span>{fileObj.file.name}</span>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPdfModalFile(fileObj.file)}
+                >
+                  <Eye />
+                </Button>
                 <div className="ml-auto">
                   {fileObj.isLoading && <Loader className="animate-spin" />}
                 </div>
@@ -322,6 +330,26 @@ export default function App() {
         onChange={handleFileSelect}
         className="hidden"
       />
+
+      {pdfModalFile && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg h-screen w-screen relative flex flex-col">
+            <Button
+              className="ml-auto"
+              onClick={() => setPdfModalFile(null)}
+              variant={"ghost"}
+              size={"lg"}
+            >
+              <X />
+            </Button>
+            <iframe
+              src={URL.createObjectURL(pdfModalFile)}
+              title="Anteprima PDF"
+              className="w-full h-full rounded-b-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
