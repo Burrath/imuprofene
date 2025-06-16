@@ -8,6 +8,7 @@ import {
   Import,
   Loader,
   Plus,
+  Recycle,
   X,
 } from "lucide-react";
 import { Button } from "./components/ui/button";
@@ -16,6 +17,13 @@ import type { iImuYearData, iVisura } from "./lib/visura/visuraInterfaces";
 import { parseRawDataToSituazioniVisura } from "./lib/visura/visuraExtract";
 import { calculateImu } from "./lib/visura/visuraCalc";
 import type { iAliquoteComune } from "./lib/visura/aliquota";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./components/ui/accordion";
 
 export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
   const sortedYears = Object.keys(imuData)
@@ -265,14 +273,31 @@ export default function App() {
           <Plus />
         </Button>
 
-        <Button onClick={runExtract} size={"lg"}>
+        <Button
+          disabled={!droppedFiles.length}
+          onClick={runExtract}
+          size={"lg"}
+        >
           <Import />
           <ChevronRight />
         </Button>
 
-        <Button onClick={runCalc} size={"lg"}>
+        <Button
+          disabled={!droppedFiles.find((e) => e.refinedData)}
+          onClick={runCalc}
+          size={"lg"}
+        >
           <Calculator />
           <ChevronRight />
+        </Button>
+
+        <Button
+          onClick={() => setDroppedFiles([])}
+          size={"lg"}
+          className="ml-auto text-red-600"
+          variant={"ghost"}
+        >
+          <Recycle />
         </Button>
       </div>
 
@@ -296,20 +321,18 @@ export default function App() {
         <div className="flex flex-col gap-3 px-3">
           {droppedFiles.map((fileObj) => (
             <div
-              className="border-2 border-slate-600 rounded p-3 bg-gray-50 flex flex-col gap-3"
+              className="relative border-2 border-slate-600 rounded p-3 bg-gray-50 flex flex-col gap-3"
               key={fileObj._id}
             >
               <div className="flex flex-row gap-3 items-center">
-                <Button
-                  onClick={() => removeFile(fileObj._id)}
-                  variant={"ghost"}
-                  className="text-red-600"
-                >
-                  <X />
-                </Button>
+                {fileObj.isLoading && (
+                  <Loader className="animate-spin absolute top-1/2 right-1/2" />
+                )}
+
                 <div className="flex flex-col">
                   <span>{fileObj.file.name}</span>
                 </div>
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -317,18 +340,39 @@ export default function App() {
                 >
                   <Eye />
                 </Button>
-                <div className="ml-auto">
-                  {fileObj.isLoading && <Loader className="animate-spin" />}
-                </div>
+
+                <Button
+                  onClick={() => removeFile(fileObj._id)}
+                  variant={"ghost"}
+                  className="text-red-600 ml-auto"
+                >
+                  <X />
+                </Button>
               </div>
 
-              {fileObj.refinedData && (
-                <SituazioniTableComponent data={fileObj.refinedData} />
-              )}
+              <Accordion type="multiple" className="w-full">
+                {fileObj.refinedData && (
+                  <AccordionItem value="refined-data">
+                    <AccordionTrigger className="mr-3 cursor-pointer">
+                      Situazione catastale
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <SituazioniTableComponent data={fileObj.refinedData} />
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
 
-              {fileObj.imuData && (
-                <ImuTableComponent imuData={fileObj.imuData} />
-              )}
+                {fileObj.imuData && (
+                  <AccordionItem value="imu-data">
+                    <AccordionTrigger className="mr-3 cursor-pointer">
+                      Dati IMU
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ImuTableComponent imuData={fileObj.imuData} />
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </Accordion>
             </div>
           ))}
         </div>
