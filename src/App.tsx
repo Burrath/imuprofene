@@ -4,7 +4,8 @@ import type { DragEvent, ChangeEvent } from "react";
 import { Check, ChevronRight, Loader, Plus, X } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { pdfToRawTextData, type pdfToRawTextDataRes } from "./lib/pdf";
-import { parseRawDataToSituazioniVisura, type iVisura } from "./lib/visura";
+import type { iVisura } from "./lib/visura/visuraInterfaces";
+import { parseRawDataToSituazioniVisura } from "./lib/visura/visuraExtract";
 
 export function TableComponent({ data }: { data: iVisura }) {
   return (
@@ -31,7 +32,9 @@ export function TableComponent({ data }: { data: iVisura }) {
                   situazione.unità
                     .map(
                       (u) =>
-                        `Foglio ${u.foglio}, Particella ${u.particella}, Sub ${u.sub}`
+                        `Foglio ${u.foglio ?? ""}, Particella ${
+                          u.particella ?? ""
+                        }, Sub ${u.sub ?? ""}`
                     )
                     .join(" | ")}
               </td>
