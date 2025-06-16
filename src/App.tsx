@@ -194,31 +194,9 @@ export default function App() {
     fileInputRef.current?.click();
   }
 
-  const runCalc = async () => {
-    // Step 1: set all files to loading
-    setDroppedFiles((prev) =>
-      prev.map((file) => ({
-        ...file,
-        isLoading: true,
-      }))
-    );
+  const run = async () => {
+    if (!aliquoteComuni) return;
 
-    // Step 2: process files one by one
-    for (const file of droppedFiles) {
-      if (!file.refinedData || !aliquoteComuni) continue;
-
-      const imuData = await calculateImu(file.refinedData, aliquoteComuni);
-
-      // Step 3: update only that file in state
-      setDroppedFiles((prev) =>
-        prev.map((f) =>
-          f._id === file._id ? { ...f, isLoading: false, imuData } : f
-        )
-      );
-    }
-  };
-
-  const runExtract = async () => {
     // Step 1: set all files to loading
     setDroppedFiles((prev) =>
       prev.map((file) => ({
@@ -232,12 +210,13 @@ export default function App() {
       const rawData = await pdfToRawTextData(file.file);
 
       const refinedData = parseRawDataToSituazioniVisura(rawData);
+      const imuData = await calculateImu(refinedData, aliquoteComuni);
 
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>
         prev.map((f) =>
           f._id === file._id
-            ? { ...f, rawData, isLoading: false, refinedData }
+            ? { ...f, rawData, isLoading: false, refinedData, imuData }
             : f
         )
       );
@@ -273,21 +252,8 @@ export default function App() {
           <Plus />
         </Button>
 
-        <Button
-          disabled={!droppedFiles.length}
-          onClick={runExtract}
-          size={"lg"}
-        >
-          <Import />
+        <Button disabled={!droppedFiles.length} onClick={run} size={"lg"}>
           <ChevronRight />
-        </Button>
-
-        <Button
-          disabled={!droppedFiles.find((e) => e.refinedData)}
-          onClick={runCalc}
-          size={"lg"}
-        >
-          <Calculator />
           <ChevronRight />
         </Button>
 
@@ -302,9 +268,9 @@ export default function App() {
       </div>
 
       {droppedFiles.filter((e) => e.isLoading).length > 0 && (
-        <div className="h-3 bg-gray-200 mx-3 rounded overflow-hidden">
+        <div className="h-3 min-h-3 bg-gray-200 mx-3 rounded overflow-hidden">
           <div
-            className="h-full bg-blue-500 transition-all duration-1000"
+            className="h-full bg-blue-500 transition-all duration-75"
             style={{
               width: `${
                 (1 -
@@ -388,8 +354,8 @@ export default function App() {
       />
 
       {pdfModalFile && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-lg h-screen w-screen relative flex flex-col">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center  h-screen w-screen p-5">
+          <div className="bg-white rounded-lg shadow-lg relative flex flex-col h-full w-full">
             <Button
               className="ml-auto"
               onClick={() => setPdfModalFile(null)}
