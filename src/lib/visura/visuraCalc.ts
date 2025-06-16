@@ -1,4 +1,4 @@
-import { getIMUMultiplier } from "./imuMultiplier";
+import getAliquotaFromComune from "./aliquota";
 import {
   SITUAZIONE_TYPE,
   type iImuYearData,
@@ -48,12 +48,43 @@ function getSituazioneOfASpecificDate(
   }
 }
 
-function getImuCalculation(situazione: iSituazioneVisura) {
-  if (!situazione.categoria) return 0;
+export function getImuCalculation(
+  situazione: iSituazioneVisura,
+  comune: string
+): number {
+  if (!situazione.categoria || !situazione.rendita) return 0;
 
-  const IMUmultiplier = getIMUMultiplier(situazione.categoria);
+  const categoria = situazione.categoria.toUpperCase();
+  const rendita = situazione.rendita;
 
-  return IMUmultiplier ?? 0;
+  // Aliquota temporaneamente fissa a 1%
+  const aliquota = getAliquotaFromComune(comune);
+
+  // Coefficienti in base alla categoria catastale
+  const coefficienti: { [key: string]: number } = {
+    A: 160,
+    A10: 80,
+    B: 140,
+    C1: 55,
+    C: 160,
+    D: 65,
+    D5: 80,
+  };
+
+  // Estrai il prefisso rilevante per determinare il coefficiente
+  const normalizedCategoria = categoria.replace(/\//g, "").toUpperCase(); // es: A3 -> A3
+  const coeff =
+    coefficienti[normalizedCategoria] ??
+    coefficienti[normalizedCategoria.slice(0, 1)] ??
+    160; // fallback
+
+  // Calcolo base imponibile
+  const baseImponibile = rendita * 1.05 * coeff;
+
+  // Calcolo IMU
+  const imu = baseImponibile * aliquota;
+
+  return Math.round(imu * 100) / 100;
 }
 
 export function calculateImu(visura: iVisura): iImuYearData {
@@ -77,11 +108,7 @@ export function calculateImu(visura: iVisura): iImuYearData {
 
     const daysInYear = getDaysInYear(year);
 
-    for (
-      let day = new Date(end);
-      day > start;
-      day.setDate(day.getDate() - 1)
-    ) {
+    for (let day = new Date(end); day > start; day.setDate(day.getDate() - 1)) {
       const relevantSitua = getSituazioneOfASpecificDate(
         new Date(day), // create a new Date to avoid mutation issues
         visura.situazioni
@@ -92,7 +119,7 @@ export function calculateImu(visura: iVisura): iImuYearData {
       result[year] = {
         imu:
           (result[year]?.imu ?? 0) +
-          getImuCalculation(relevantSitua) / daysInYear,
+          getImuCalculation(relevantSitua, visura.comune) / daysInYear,
         rendita:
           (result[year]?.rendita ?? 0) +
           (relevantSitua?.rendita ?? 0) / daysInYear,
