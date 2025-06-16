@@ -1,13 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import type { DragEvent, ChangeEvent } from "react";
 
 import {
+  Calculator,
   ChevronRight,
   Edit,
   Eye,
   Loader,
   Plus,
   Recycle,
+  Upload,
   X,
 } from "lucide-react";
 import { Button } from "./components/ui/button";
@@ -15,7 +17,6 @@ import { pdfToRawTextData } from "./lib/pdf";
 import type { iImuYearData, iVisura } from "./lib/visura/visuraInterfaces";
 import { parseRawDataToSituazioniVisura } from "./lib/visura/visuraExtract";
 import { calculateImu } from "./lib/visura/visuraCalc";
-import type { iAliquoteComune } from "./lib/visura/aliquota";
 
 import {
   Accordion,
@@ -23,44 +24,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./components/ui/accordion";
-
-export function AliquoteModal({
-  years,
-  categorie,
-  onClose,
-}: {
-  years: number[];
-  categorie: string[];
-  onClose: Function;
-}) {
-  return (
-    <div className="p-3 bg-white rounded w-full max-w-md">
-      <h3 className="mb-3 text-lg font-semibold">Inserisci le aliquote</h3>
-
-      {years.map((y, key) => {
-        return (
-          <div className="mb-3" key={key}>
-            <span className="font-semibold">{y}</span>
-
-            {categorie.map((c, key) => (
-              <div className="flex items-center gap-3" key={key}>
-                <span className="text-nowrap">{c} :</span>
-                <input className="border w-full" type="number" />
-              </div>
-            ))}
-          </div>
-        );
-      })}
-
-      <div className="flex justify-between mt-8">
-        <Button onClick={() => onClose()} variant={"outline"}>
-          Cancel
-        </Button>
-        <Button>SET</Button>
-      </div>
-    </div>
-  );
-}
 
 export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
   const sortedYears = Object.keys(imuData)
@@ -169,21 +132,7 @@ export default function App() {
   const [droppedFiles, setDroppedFiles] = useState<DroppedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [aliquoteComuni, setAliquoteComuni] = useState<iAliquoteComune>();
   const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
-  const [aliquoteModalConfig, setAliquoteModalConfig] = useState<{
-    years: number[];
-    categorie: string[];
-  }>();
-
-  useEffect(() => {
-    (async () => {
-      const res = await fetch("/aliquote-comuni.json");
-      const data: iAliquoteComune = await res.json();
-
-      setAliquoteComuni(data);
-    })();
-  }, []);
 
   function generateId() {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -232,9 +181,7 @@ export default function App() {
     fileInputRef.current?.click();
   }
 
-  const run = async () => {
-    if (!aliquoteComuni) return;
-
+  const runExtract = async () => {
     // Step 1: set all files to loading
     setDroppedFiles((prev) =>
       prev.map((file) => ({
@@ -247,15 +194,28 @@ export default function App() {
     for (const file of droppedFiles) {
       const rawData = await pdfToRawTextData(file.file);
       const refinedData = parseRawDataToSituazioniVisura(rawData);
-      const imuData = await calculateImu(refinedData, aliquoteComuni);
 
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>
         prev.map((f) =>
           f._id === file._id
-            ? { ...f, rawData, isLoading: false, refinedData, imuData }
+            ? { ...f, rawData, isLoading: false, refinedData }
             : f
         )
+      );
+    }
+  };
+
+  const runCalc = () => {
+    // Step 2: process files one by one
+    for (const file of droppedFiles) {
+      if (!file.refinedData) return;
+
+      const imuData = calculateImu(file.refinedData);
+
+      // Step 3: update only that file in state
+      setDroppedFiles((prev) =>
+        prev.map((f) => (f._id === file._id ? { ...f, imuData } : f))
       );
     }
   };
@@ -289,8 +249,17 @@ export default function App() {
           <Plus />
         </Button>
 
-        <Button disabled={!droppedFiles.length} onClick={run} size={"lg"}>
+        <Button
+          disabled={!droppedFiles.length}
+          onClick={runExtract}
+          size={"lg"}
+        >
+          <Upload />
           <ChevronRight />
+        </Button>
+
+        <Button disabled={!droppedFiles.length} onClick={runCalc} size={"lg"}>
+          <Calculator />
           <ChevronRight />
         </Button>
 
@@ -346,35 +315,6 @@ export default function App() {
                         <Eye />
                       </Button>
                       <Button
-                        disabled={!fileObj.refinedData}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setAliquoteModalConfig({
-                            years: [
-                              ...new Set(
-                                fileObj.refinedData?.situazioni
-                                  .map((s) => {
-                                    return s.dal?.getFullYear();
-                                  })
-                                  .filter((e) => e)
-                              ),
-                            ] as number[],
-                            categorie: [
-                              ...new Set(
-                                fileObj.refinedData?.situazioni
-                                  .map((s) => {
-                                    return s.categoria;
-                                  })
-                                  .filter((e) => e)
-                              ),
-                            ] as string[],
-                          })
-                        }
-                      >
-                        <Edit />
-                      </Button>
-                      <Button
                         onClick={() => removeFile(fileObj._id)}
                         variant={"ghost"}
                         className="text-red-600 ml-auto"
@@ -386,17 +326,25 @@ export default function App() {
 
                   {fileObj.refinedData && (
                     <AccordionContent className="border-t border-slate-600 rounded p-3 bg-white">
-                      <p className="font-semibold mb-2">
-                        Numero visura: {fileObj.refinedData.numero} / Comune:{" "}
-                        {fileObj.refinedData.comune} (
-                        {fileObj.refinedData.codiceComune})
-                      </p>
+                      <div className="flex justify-between mb-2 items-center">
+                        <p className="font-semibold">
+                          Numero visura: {fileObj.refinedData.numero} / Comune:{" "}
+                          {fileObj.refinedData.comune} (
+                          {fileObj.refinedData.codiceComune})
+                        </p>
+
+                        <Button size={"sm"} variant={"outline"}>
+                          Aliquote <Edit />
+                        </Button>
+                      </div>
 
                       <SituazioniTableComponent data={fileObj.refinedData} />
 
-                      <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
                       {fileObj.imuData && (
-                        <ImuTableComponent imuData={fileObj.imuData} />
+                        <>
+                          <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
+                          <ImuTableComponent imuData={fileObj.imuData} />
+                        </>
                       )}
                     </AccordionContent>
                   )}
@@ -415,16 +363,6 @@ export default function App() {
         onChange={handleFileSelect}
         className="hidden"
       />
-
-      {aliquoteModalConfig && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center  h-screen w-screen p-5">
-          <AliquoteModal
-            onClose={() => setAliquoteModalConfig(undefined)}
-            years={aliquoteModalConfig.years}
-            categorie={aliquoteModalConfig.categorie}
-          />
-        </div>
-      )}
 
       {pdfModalFile && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center  h-screen w-screen p-5">

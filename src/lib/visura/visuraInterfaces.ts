@@ -17,6 +17,9 @@ export interface iSituazioneVisura {
   unità?: iUnitàVisura[];
   categoria?: string;
   rendita?: number;
+  aliquote?: {
+    [year: number]: number;
+  };
 }
 
 export interface iVisura {
