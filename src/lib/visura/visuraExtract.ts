@@ -123,7 +123,9 @@ function getSituazioniFromRawData(
 
     const getDataFromRecordColumn = (
       columnName: string,
-      relevantRecordFromSituazione: pdfToRawTextDataRes[]
+      relevantRecordFromSituazione: pdfToRawTextDataRes[],
+      maxLength: number = 1,
+      offset: number = 5
     ) => {
       // extract data from relevant records (find type first)
       const colRecord = relevantRecordFromSituazione.find((record) =>
@@ -134,10 +136,10 @@ function getSituazioniFromRawData(
         const foglioColData = relevantRecordFromSituazione.filter((record) => {
           const posCondition =
             record.y > colRecord.y &&
-            isWithinDelta(record.avgX, colRecord.avgX, 5);
+            isWithinDelta(record.avgX, colRecord.avgX, offset);
 
           const valueCondition =
-            record.text && record.text.split(" ").length === 1;
+            record.text && record.text.split(" ").length <= maxLength;
 
           return posCondition && valueCondition;
         });
@@ -231,8 +233,14 @@ function getSituazioniFromRawData(
     const subColRecord = getDataFromRecordColumn("sub", sRecords);
     const unità = getUnità(foglioColRecord, particellaColRecord, subColRecord);
     const rendita = getRendita(sRecords);
-    const categoria = getDataFromRecordColumn("categoria", sRecords)[0]?.text;
     const situazioneType = getSituazioneType(sRecords);
+
+    let categoria = getDataFromRecordColumn("categoria", sRecords, 2)[0]?.text;
+    if (!categoria) {
+      const res = getDataFromRecordColumn("qualità", sRecords, 2, 30);
+      categoria = res[0]?.text;
+      if (res[1]?.text) categoria += ` ${res[1].text}`;
+    }
 
     const situa: iSituazioneVisura = {
       dal: date,
