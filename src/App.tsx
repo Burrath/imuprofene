@@ -6,6 +6,46 @@ import { Button } from "./components/ui/button";
 import { pdfToRawTextData, type pdfToRawTextDataRes } from "./lib/pdf";
 import { parseRawDataToSituazioniVisura, type iVisura } from "./lib/visura";
 
+export function TableComponent({ data }: { data: iVisura }) {
+  return (
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Numero visura: {data.numero}</h2>
+      <table className="min-w-full border border-gray-300">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border px-4 py-2">Dal</th>
+            <th className="border px-4 py-2">Unità (foglio/particella/sub)</th>
+            <th className="border px-4 py-2">Categoria</th>
+            <th className="border px-4 py-2">Reddito</th>
+            <th className="border px-4 py-2">Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.situazioni.map((situazione, index) => (
+            <tr key={index}>
+              <td className="border px-4 py-2">
+                {new Date(situazione.dal ?? new Date()).toLocaleDateString()}
+              </td>
+              <td className="border px-4 py-2">
+                {situazione.unità &&
+                  situazione.unità
+                    .map(
+                      (u) =>
+                        `Foglio ${u.foglio}, Particella ${u.particella}, Sub ${u.sub}`
+                    )
+                    .join(" | ")}
+              </td>
+              <td className="border px-4 py-2">{situazione.categoria}</td>
+              <td className="border px-4 py-2">€ {situazione.reddito}</td>
+              <td className="border px-4 py-2">{situazione.type}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 type DroppedFile = {
   _id: string;
   file: File;
@@ -81,8 +121,6 @@ export default function App() {
 
       const refinedData = parseRawDataToSituazioniVisura(rawData);
 
-      console.log(refinedData);
-
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>
         prev.map((f) =>
@@ -149,30 +187,36 @@ export default function App() {
         <div className="flex flex-col gap-3 px-3">
           {droppedFiles.map((fileObj) => (
             <div
-              className="border rounded p-3 bg-gray-50 flex items-center gap-3"
+              className="border rounded p-3 bg-gray-50 flex flex-col gap-3"
               key={fileObj._id}
             >
-              <Button
-                onClick={() => removeFile(fileObj._id)}
-                variant={"ghost"}
-                className="text-red-600"
-              >
-                <X />
-              </Button>
-              <div className="flex flex-col">
-                <span>{fileObj.file.name}</span>
-                <span>{fileObj.refinedData?.numero}</span>
-              </div>
-              <div className="ml-auto">
-                {fileObj.isLoading && <Loader className="animate-spin" />}
+              <div className="flex flex-row gap-3 items-center">
+                <Button
+                  onClick={() => removeFile(fileObj._id)}
+                  variant={"ghost"}
+                  className="text-red-600"
+                >
+                  <X />
+                </Button>
+                <div className="flex flex-col">
+                  <span>{fileObj.file.name}</span>
+                  <span>{fileObj.refinedData?.numero}</span>
+                </div>
+                <div className="ml-auto">
+                  {fileObj.isLoading && <Loader className="animate-spin" />}
 
-                {!fileObj.isLoading && fileObj.rawData && (
-                  <>
-                    {!!fileObj.rawData.length && <Check />}{" "}
-                    {!fileObj.rawData.length && <X />}
-                  </>
-                )}
+                  {!fileObj.isLoading && fileObj.rawData && (
+                    <>
+                      {!!fileObj.rawData.length && <Check />}{" "}
+                      {!fileObj.rawData.length && <X />}
+                    </>
+                  )}
+                </div>
               </div>
+
+              {fileObj.refinedData && (
+                <TableComponent data={fileObj.refinedData} />
+              )}
             </div>
           ))}
         </div>
