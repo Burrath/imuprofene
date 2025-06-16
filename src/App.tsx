@@ -230,11 +230,11 @@ export default function App() {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className="h-screen w-screen relative space-y-4 flex flex-"
+      className="h-screen w-screen relative space-y-4 flex flex-col"
     >
       {isDragging && (
         <>
-          <div className="absolute rounded inset-0 m-5 flex items-center justify-center border-blue-500 bg-blue-100 border-5 border-dashed pointer-events-none">
+          <div className="absolute rounded inset-0 m-5 flex items-center justify-center border-blue-500 bg-blue-100 border-5 border-dashed pointer-events-none z-50">
             <div className="flex items-center justify-center">
               <p className="font-semibold text-5xl flex items-center gap-5">
                 Drop like it's hot <Flame size={50} fill="red" />
