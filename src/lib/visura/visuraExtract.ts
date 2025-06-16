@@ -91,26 +91,6 @@ function getSituazioniFromRawData(
 
   // for each situazioni title let's build a situazione visura, extracting data for each tabla
   situazioniTitleRecord.forEach((titleRecord, index) => {
-    const getSituazioneDate = () => {
-      // Extract date of the situazione (dd/mm/yy o dd/mm/yyyy)
-      const match = titleRecord.text.match(/(\d{2})\/(\d{2})\/(\d{2,4})/);
-
-      if (match) {
-        const [, day, month, yearRaw] = match;
-
-        const year =
-          yearRaw.length === 2
-            ? parseInt(yearRaw, 10) > 30
-              ? "19" + yearRaw
-              : "20" + yearRaw
-            : yearRaw;
-
-        const date = new Date(`${year}-${month}-${day}`);
-
-        return date;
-      }
-    };
-
     const getRelevanSituazioneRecords = () => {
       const startRow = titleRecord.y;
       const endRow = situazioniTitleRecord[index + 1]?.y ?? 9999999;
@@ -148,6 +128,52 @@ function getSituazioniFromRawData(
       }
 
       return [];
+    };
+
+    const getSituazioneDate = (
+      titleRecord: pdfToRawTextDataRes,
+      relevantRecordFromSituazione: pdfToRawTextDataRes[]
+    ) => {
+      // Extract date of the situazione (dd/mm/yy o dd/mm/yyyy)
+      const match = titleRecord.text.match(/(\d{2})\/(\d{2})\/(\d{2,4})/);
+
+      if (match) {
+        const [, day, month, yearRaw] = match;
+
+        const year =
+          yearRaw.length === 2
+            ? parseInt(yearRaw, 10) > 30
+              ? "19" + yearRaw
+              : "20" + yearRaw
+            : yearRaw;
+
+        const date = new Date(`${year}-${month}-${day}`);
+
+        return date;
+      }
+
+      const noteRecord = getDataFromRecordColumn(
+        "derivanti",
+        relevantRecordFromSituazione,
+        100
+      );
+      const noteText = noteRecord.map((r) => r.text).join(" ");
+      const match2 = noteText.match(/\b(\d{2})\/(\d{2})\/(\d{2,4})\b/);
+
+      if (match2) {
+        const [, day, month, yearRaw] = match2;
+
+        const year =
+          yearRaw.length === 2
+            ? parseInt(yearRaw, 10) > 30
+              ? "19" + yearRaw
+              : "20" + yearRaw
+            : yearRaw;
+
+        const date = new Date(`${year}-${month}-${day}`);
+
+        return date;
+      }
     };
 
     const getRendita = (
@@ -227,7 +253,7 @@ function getSituazioniFromRawData(
     const sRecords = getRelevanSituazioneRecords();
 
     // extract column data given column name
-    const date = getSituazioneDate();
+    const date = getSituazioneDate(titleRecord, sRecords);
     const foglioColRecord = getDataFromRecordColumn("foglio", sRecords);
     const particellaColRecord = getDataFromRecordColumn("particella", sRecords);
     const subColRecord = getDataFromRecordColumn("sub", sRecords);
@@ -250,7 +276,14 @@ function getSituazioniFromRawData(
       type: situazioneType,
     };
 
-    situazioni.push(situa);
+    if (
+      situa.dal ||
+      situa.categoria ||
+      situa.rendita ||
+      situa.type ||
+      situa.unità?.length
+    )
+      situazioni.push(situa);
   });
 
   return situazioni;

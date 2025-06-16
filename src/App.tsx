@@ -191,8 +191,6 @@ export default function App() {
 
     // Step 2: process files one by one
     for (const file of droppedFiles) {
-      if (file.refinedData && file.imuData) continue;
-
       const rawData = await pdfToRawTextData(file.file);
       const refinedData = parseRawDataToSituazioniVisura(rawData);
       const imuData = await calculateImu(refinedData, aliquoteComuni);
@@ -275,61 +273,52 @@ export default function App() {
               className="relative border-2 border-slate-600 rounded bg-gray-200 flex flex-col"
               key={fileObj._id}
             >
-              <div className="flex flex-row gap-3 items-center">
-                {fileObj.isLoading && (
-                  <Loader className="animate-spin absolute top-1/2 right-1/2" />
-                )}
-
-                <div className="flex items-center w-full px-3">
-                  <span>{fileObj.file.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setPdfModalFile(fileObj.file)}
-                  >
-                    <Eye />
-                  </Button>
-                  <Button
-                    onClick={() => removeFile(fileObj._id)}
-                    variant={"ghost"}
-                    className="text-red-600 ml-auto"
-                  >
-                    <X />
-                  </Button>
-                </div>
-              </div>
-
-              {fileObj.refinedData && (
-                <div className="border-t border-slate-600 rounded p-3 bg-white">
-                  <span className="font-semibold">
-                    Numero visura: {fileObj.refinedData.numero} / Comune:{" "}
-                    {fileObj.refinedData.comune} (
-                    {fileObj.refinedData.codiceComune})
-                  </span>
-
-                  <Accordion type="multiple" className="w-full">
-                    <AccordionItem value="refined-data">
-                      <AccordionTrigger className="mr-3 cursor-pointer">
-                        Situazione catastale
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <SituazioniTableComponent data={fileObj.refinedData} />
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {fileObj.imuData && (
-                      <AccordionItem value="imu-data">
-                        <AccordionTrigger className="mr-3 cursor-pointer">
-                          Dati IMU
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <ImuTableComponent imuData={fileObj.imuData} />
-                        </AccordionContent>
-                      </AccordionItem>
+              <Accordion type="multiple" className="w-full">
+                <AccordionItem value="exported-data">
+                  <div className="flex flex-row gap-3 items-center">
+                    {fileObj.isLoading && (
+                      <Loader className="animate-spin absolute top-1/2 right-1/2" />
                     )}
-                  </Accordion>
-                </div>
-              )}
+
+                    <div className="flex items-center w-full px-3">
+                      <AccordionTrigger className="cursor-pointer">
+                        <span>{fileObj.file.name}</span>
+                      </AccordionTrigger>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPdfModalFile(fileObj.file)}
+                      >
+                        <Eye />
+                      </Button>
+                      <Button
+                        onClick={() => removeFile(fileObj._id)}
+                        variant={"ghost"}
+                        className="text-red-600 ml-auto"
+                      >
+                        <X />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {fileObj.refinedData && (
+                    <AccordionContent className="border-t border-slate-600 rounded p-3 bg-white">
+                      <p className="font-semibold mb-2">
+                        Numero visura: {fileObj.refinedData.numero} / Comune:{" "}
+                        {fileObj.refinedData.comune} (
+                        {fileObj.refinedData.codiceComune})
+                      </p>
+
+                      <SituazioniTableComponent data={fileObj.refinedData} />
+
+                      <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
+                      {fileObj.imuData && (
+                        <ImuTableComponent imuData={fileObj.imuData} />
+                      )}
+                    </AccordionContent>
+                  )}
+                </AccordionItem>
+              </Accordion>
             </div>
           ))}
         </div>
