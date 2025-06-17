@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import type { DragEvent, ChangeEvent } from "react";
+import type { DragEvent, ChangeEvent, ReactElement } from "react";
 
 import {
   Calculator,
@@ -26,7 +26,45 @@ import {
   AccordionTrigger,
 } from "./components/ui/accordion";
 
-export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
+function Modal({
+  content,
+  onClose,
+}: {
+  content?: ReactElement;
+  onClose: () => void;
+}) {
+  if (!content) return <></>;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex flex-col items-center justify-center h-screen w-screen p-5">
+      <div className="bg-white flex w-full">
+        <Button
+          onClick={() => onClose()}
+          className="ml-auto"
+          variant={"ghost"}
+          size={"lg"}
+        >
+          <X />
+        </Button>
+      </div>
+      {content}
+    </div>
+  );
+}
+
+function PdfModal({ pdf }: { pdf: any }) {
+  return (
+    <div className="bg-white rounded-lg shadow-lg relative flex flex-col h-full w-full">
+      <iframe
+        src={URL.createObjectURL(pdf)}
+        title="Anteprima PDF"
+        className="w-full h-full rounded-b-lg"
+      />
+    </div>
+  );
+}
+
+function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
   const sortedYears = Object.keys(imuData)
     .map(Number)
     .sort((a, b) => b - a); // sort from newest to oldest
@@ -75,7 +113,7 @@ export function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
   );
 }
 
-export function SituazioniTableComponent({ data }: { data: iVisura }) {
+function SituazioniTableComponent({ data }: { data: iVisura }) {
   return (
     <div className="">
       <table className="min-w-full border border-gray-300">
@@ -133,7 +171,7 @@ export default function App() {
   const [droppedFiles, setDroppedFiles] = useState<DroppedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [pdfModalFile, setPdfModalFile] = useState<File | null>(null);
+  const [modalContent, setModalContent] = useState<ReactElement>();
 
   function generateId() {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -320,7 +358,9 @@ export default function App() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setPdfModalFile(fileObj.file)}
+                        onClick={() =>
+                          setModalContent(<PdfModal pdf={fileObj.file} />)
+                        }
                       >
                         <Eye />
                       </Button>
@@ -370,25 +410,10 @@ export default function App() {
         className="hidden"
       />
 
-      {pdfModalFile && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center  h-screen w-screen p-5">
-          <div className="bg-white rounded-lg shadow-lg relative flex flex-col h-full w-full">
-            <Button
-              className="ml-auto"
-              onClick={() => setPdfModalFile(null)}
-              variant={"ghost"}
-              size={"lg"}
-            >
-              <X />
-            </Button>
-            <iframe
-              src={URL.createObjectURL(pdfModalFile)}
-              title="Anteprima PDF"
-              className="w-full h-full rounded-b-lg"
-            />
-          </div>
-        </div>
-      )}
+      <Modal
+        onClose={() => setModalContent(undefined)}
+        content={modalContent}
+      />
 
       <br />
       <br />
