@@ -28,8 +28,8 @@ export interface iVisura {
 
 export interface iAliquoteComune {
   [comune: string]: {
-    [year: number]: {
-      [categoria: string]: number;
+    [year: string]: {
+      [categoria: string]: number | undefined;
     };
   };
 }

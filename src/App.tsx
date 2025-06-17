@@ -51,19 +51,111 @@ function Modal({
           <X />
         </Button>
       </div>
-      {content}
+      <div className="h-full w-full bg-white overflow-scroll">{content}</div>
     </div>
   );
 }
 
 function PdfModal({ pdf }: { pdf: any }) {
   return (
-    <div className="bg-white rounded-lg shadow-lg relative flex flex-col h-full w-full">
+    <div className="rounded-lg shadow-lg relative flex flex-col h-full w-full">
       <iframe
         src={URL.createObjectURL(pdf)}
         title="Anteprima PDF"
         className="w-full h-full rounded-b-lg"
       />
+    </div>
+  );
+}
+
+function AliquoteModal({
+  _aliquote,
+  _setAliquote,
+}: {
+  _aliquote: iAliquoteComune;
+  _setAliquote: (e: iAliquoteComune) => void;
+}) {
+  const [aliquote, setAliquote] = useState<iAliquoteComune>(_aliquote);
+
+  const comuni = Object.keys(aliquote).sort();
+
+  return (
+    <div className="space-y-4 p-4">
+      {comuni.map((comune, comuneIndex) => {
+        const years = Object.keys(aliquote[comune]).sort(
+          (a, b) => Number(b) - Number(a)
+        );
+
+        return (
+          <div key={comuneIndex} className="p-4 bg-gray">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{comune}</h2>
+
+            {years.map((year, yearIndex) => {
+              const categorie = Object.keys(aliquote[comune][year]).sort();
+
+              return (
+                <div
+                  key={yearIndex}
+                  className="mb-4 border rounded border-slate-800 p-2"
+                >
+                  <h3 className="text-lg flex items-center justify-between font-semibold text-gray-700 mb-2">
+                    <span>Anno: {year}</span>
+                    <Button
+                      onClick={() => {
+                        const aliquoteCopy = structuredClone(aliquote);
+
+                        delete aliquoteCopy[comune][year];
+                        setAliquote(aliquoteCopy);
+                      }}
+                      className="text-red-600"
+                      variant={"ghost"}
+                    >
+                      <X />
+                    </Button>
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {categorie.map((categoria, categoriaIndex) => (
+                      <div
+                        key={categoriaIndex}
+                        className="flex items-center gap-2 border rounded bg-slate-800 p-1 ps-2"
+                      >
+                        <label
+                          className="text-sm text-white font-semibold uppercase"
+                          style={{ lineHeight: "15px" }}
+                        >
+                          {categoria}
+                        </label>
+                        <input
+                          onFocus={(e) => e.target.select()}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="w-full border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-800 bg-slate-100"
+                          value={aliquote[comune][year][categoria] ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const aliquoteCopy = structuredClone(aliquote);
+
+                            aliquoteCopy[comune][year][categoria] =
+                              val === "" ? "" : (parseFloat(val) as any);
+
+                            setAliquote(aliquoteCopy);
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+
+      <div className="flex justify-end">
+        <Button onClick={() => _setAliquote(aliquote)}>Imposta</Button>
+      </div>
     </div>
   );
 }
@@ -172,11 +264,12 @@ type DroppedFile = {
 };
 
 export default function App() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [droppedFiles, setDroppedFiles] = useState<DroppedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalContent, setModalContent] = useState<ReactElement>();
-  const [aliquote, setAliquote] = useState<iAliquoteComune>({});
+  const [aliquote, setAliquote] = useState<iAliquoteComune>();
 
   function generateId() {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -251,6 +344,8 @@ export default function App() {
   };
 
   const runCalc = () => {
+    if (!aliquote) return;
+
     // Step 2: process files one by one
     for (const file of droppedFiles) {
       if (!file.refinedData) return;
@@ -266,6 +361,55 @@ export default function App() {
 
   const removeFile = (id: string) => {
     setDroppedFiles((prev) => prev.filter((file) => file._id !== id));
+  };
+
+  const presetAliquote = (): iAliquoteComune => {
+    const aliquote: iAliquoteComune = {};
+
+    const comuni = droppedFiles
+      .map((fileObj) => fileObj.refinedData?.comune)
+      .filter((e) => e);
+
+    const comuniUnique = [...new Set(comuni)];
+
+    comuniUnique.forEach((comune) => {
+      if (!comune) return;
+
+      const situazioni = droppedFiles
+        .filter((f) => f.refinedData?.comune === comune)
+        .flatMap((f) => f.refinedData?.situazioni ?? []);
+
+      const years = situazioni
+        .map((s) => s.dal?.getFullYear())
+        .filter((e): e is number => typeof e === "number");
+
+      const minY = Math.min(...years);
+      const maxY = new Date().getFullYear();
+      const allYears = Array.from(
+        { length: maxY - minY + 1 },
+        (_, i) => minY + i
+      );
+
+      const categorie = situazioni.map((s) => s.categoria).filter((e) => e);
+      const categorieUnique = [...new Set(categorie)];
+
+      aliquote[comune] = {};
+
+      allYears.forEach((year) => {
+        if (!year) return;
+
+        aliquote[comune][year] = {};
+
+        categorieUnique.forEach((category) => {
+          if (!category) return;
+
+          aliquote[comune][year][category] = undefined;
+        });
+      });
+    });
+
+    setAliquote(aliquote);
+    return aliquote;
   };
 
   return (
@@ -306,18 +450,42 @@ export default function App() {
           <ChevronRight />
         </Button>
 
-        <Button disabled={!droppedFiles.length} size={"sm"}>
+        <Button
+          onClick={() => {
+            // const a = aliquote ?? presetAliquote();
+            const a = presetAliquote();
+
+            setModalContent(
+              <AliquoteModal
+                _setAliquote={(e) => {
+                  setAliquote(e);
+                  setModalContent(undefined);
+                }}
+                _aliquote={a}
+              />
+            );
+          }}
+          disabled={!droppedFiles.filter((f) => f.refinedData).length}
+          size={"sm"}
+        >
           <Edit />
           <ChevronRight />
         </Button>
 
-        <Button disabled={!droppedFiles.length} onClick={runCalc} size={"sm"}>
+        <Button
+          disabled={!droppedFiles.length || !aliquote}
+          onClick={runCalc}
+          size={"sm"}
+        >
           <Calculator />
           <ChevronRight />
         </Button>
 
         <Button
-          onClick={() => setDroppedFiles([])}
+          onClick={() => {
+            setDroppedFiles([]);
+            setAliquote(undefined);
+          }}
           size={"lg"}
           className="ml-auto text-red-600"
           variant={"ghost"}

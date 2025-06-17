@@ -72,8 +72,9 @@ export function getImuCalculation(
   const normalizedCategoria = categoria.replace(/\//g, "").toUpperCase(); // es: A3 -> A3
   const coeff =
     coefficienti[normalizedCategoria] ??
-    coefficienti[normalizedCategoria.slice(0, 1)] ??
-    160; // fallback
+    coefficienti[normalizedCategoria.slice(0, 1)];
+
+  if (!coeff) return -1;
 
   // Calcolo base imponibile
   const baseImponibile = rendita * 1.05 * coeff;
@@ -117,6 +118,8 @@ export function calculateImu(
       if (!relevantSitua || !relevantSitua.categoria) continue;
 
       const aliquota = aliquote[visura.comune][year][relevantSitua.categoria];
+
+      if (!aliquota) continue;
 
       const imuCalc = getImuCalculation(relevantSitua, aliquota);
 
