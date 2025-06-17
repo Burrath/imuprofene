@@ -1,5 +1,6 @@
 import {
   SITUAZIONE_TYPE,
+  type iAliquoteComune,
   type iImuYearData,
   type iSituazioneVisura,
   type iVisura,
@@ -83,7 +84,10 @@ export function getImuCalculation(
   return Math.round(imu * 100) / 100;
 }
 
-export function calculateImu(visura: iVisura): iImuYearData {
+export function calculateImu(
+  visura: iVisura,
+  aliquote: iAliquoteComune
+): iImuYearData {
   const currentYear = new Date().getFullYear();
   const minYear = Math.min(
     ...visura.situazioni
@@ -110,17 +114,11 @@ export function calculateImu(visura: iVisura): iImuYearData {
         visura.situazioni
       );
 
-      if (
-        !relevantSitua ||
-        !relevantSitua.categoria ||
-        !relevantSitua.aliquote?.[year]
-      )
-        continue;
+      if (!relevantSitua || !relevantSitua.categoria) continue;
 
-      const imuCalc = getImuCalculation(
-        relevantSitua,
-        relevantSitua.aliquote?.[year]
-      );
+      const aliquota = aliquote[visura.comune][year][relevantSitua.categoria];
+
+      const imuCalc = getImuCalculation(relevantSitua, aliquota);
 
       const imu = (result[year]?.imu ?? 0) + imuCalc / daysInYear;
 
@@ -128,17 +126,14 @@ export function calculateImu(visura: iVisura): iImuYearData {
         (result[year]?.rendita ?? 0) +
         (relevantSitua?.rendita ?? 0) / daysInYear;
 
-      const aliquote = [
-        ...new Set([
-          ...(result[year]?.aliquote ?? []),
-          relevantSitua.aliquote?.[year],
-        ]),
+      const usedAliquote = [
+        ...new Set([...(result[year]?.aliquote ?? []), aliquota]),
       ];
 
       result[year] = {
         imu,
         rendita,
-        aliquote,
+        aliquote: usedAliquote,
       };
     }
   });

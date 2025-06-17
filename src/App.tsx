@@ -15,7 +15,11 @@ import {
 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { pdfToRawTextData } from "./lib/pdf";
-import type { iImuYearData, iVisura } from "./lib/visura/visuraInterfaces";
+import type {
+  iAliquoteComune,
+  iImuYearData,
+  iVisura,
+} from "./lib/visura/visuraInterfaces";
 import { parseRawDataToSituazioniVisura } from "./lib/visura/visuraExtract";
 import { calculateImu } from "./lib/visura/visuraCalc";
 
@@ -172,6 +176,7 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalContent, setModalContent] = useState<ReactElement>();
+  const [aliquote, setAliquote] = useState<iAliquoteComune>({});
 
   function generateId() {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -250,7 +255,7 @@ export default function App() {
     for (const file of droppedFiles) {
       if (!file.refinedData) return;
 
-      const imuData = calculateImu(file.refinedData);
+      const imuData = calculateImu(file.refinedData, aliquote);
 
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>

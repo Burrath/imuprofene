@@ -17,9 +17,6 @@ export interface iSituazioneVisura {
   unità?: iUnitàVisura[];
   categoria?: string;
   rendita?: number;
-  aliquote?: {
-    [year: number]: number;
-  };
 }
 
 export interface iVisura {
@@ -27,6 +24,14 @@ export interface iVisura {
   situazioni: iSituazioneVisura[];
   comune: string;
   codiceComune: string;
+}
+
+export interface iAliquoteComune {
+  [comune: string]: {
+    [year: number]: {
+      [categoria: string]: number;
+    };
+  };
 }
 
 export interface iImuYearData {
