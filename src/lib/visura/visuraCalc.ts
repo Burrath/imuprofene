@@ -56,10 +56,11 @@ export function getImuCalculation(
   if (!aliquota || aliquota <= 0) return undefined;
 
   const categoria = situazione.categoria?.toUpperCase();
-  const rendita = situazione.rendita;
 
-  const redditoDominicale = situazione.redditoDominicale;
-  const valoreVenale = situazione.valoreVenale;
+  const rendita = situazione.rendita;
+  const redditoDominicale = situazione.rendita;
+  const valoreVenale = situazione.rendita;
+
   const type = situazione.immobileType;
 
   // Caso 1: TERRENO EDIFICABILE

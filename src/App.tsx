@@ -215,7 +215,7 @@ function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
                 {!imuData[year].basiImponibili.length ? (
                   <X className="text-red-500 w-4 h-4" />
                 ) : (
-                  imuData[year].basiImponibili.join(" - ")
+                  imuData[year].basiImponibili.map(e => `€ ${e}`).join(" - ")
                 )}
               </td>
               <td className="border px-4 py-2">
@@ -241,6 +241,7 @@ function SituazioniTableComponent({ data }: { data: iVisura }) {
           <tr>
             <th className="border px-4 py-2">Dal</th>
             <th className="border px-4 py-2">Unità (foglio-particella-sub)</th>
+            <th className="border px-4 py-2">Immobile</th>
             <th className="border px-4 py-2">Categoria</th>
             <th className="border px-4 py-2">Rendita</th>
             <th className="border px-4 py-2">Tipo</th>
@@ -266,6 +267,7 @@ function SituazioniTableComponent({ data }: { data: iVisura }) {
                   </div>
                 )}
               </td>
+              <td className="border px-4 py-2">{situazione.immobileType}</td>
               <td className="border px-4 py-2">{situazione.categoria}</td>
               <td className="border px-4 py-2">
                 € {situazione.rendita?.toFixed(2)}

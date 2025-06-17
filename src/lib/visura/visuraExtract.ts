@@ -5,6 +5,7 @@ import {
   type iUnitàVisura,
   SITUAZIONE_TYPE,
   type iVisura,
+  IMMOBILE_TYPE,
 } from "./visuraInterfaces";
 
 function getVisuraNumberFromRawData(rawData: pdfToRawTextDataRes[]): string {
@@ -249,6 +250,22 @@ function getSituazioniFromRawData(
       }
     };
 
+    const getImmobileType = (
+      relevantRecordFromSituazione: pdfToRawTextDataRes[],
+      categoria?: string
+    ) => {
+      if (categoria) return IMMOBILE_TYPE.Fabbricato;
+
+      for (let i = 0; i < relevantRecordFromSituazione.length; i++) {
+        const record = relevantRecordFromSituazione[i];
+
+        if (record.text.toLowerCase().includes("dominicale"))
+          return IMMOBILE_TYPE.TerrenoAgricolo;
+      }
+
+      return IMMOBILE_TYPE.TerrenoEdificabile;
+    };
+
     // get relevant record only, keep all the row records releval to the situazione
     const sRecords = getRelevanSituazioneRecords();
 
@@ -261,12 +278,9 @@ function getSituazioniFromRawData(
     const rendita = getRendita(sRecords);
     const situazioneType = getSituazioneType(sRecords);
 
-    let categoria = getDataFromRecordColumn("categoria", sRecords, 2)[0]?.text;
-    if (!categoria) {
-      const res = getDataFromRecordColumn("qualità", sRecords, 2, 30);
-      categoria = res[0]?.text;
-      if (res[1]?.text) categoria += ` ${res[1].text}`;
-    }
+    const categoria = getDataFromRecordColumn("categoria", sRecords, 2)[0]
+      ?.text;
+    const immobileType = getImmobileType(sRecords, categoria);
 
     const situa: iSituazioneVisura = {
       dal: date,
@@ -274,6 +288,7 @@ function getSituazioniFromRawData(
       categoria,
       rendita: rendita,
       type: situazioneType,
+      immobileType,
     };
 
     if (

@@ -6,9 +6,9 @@ export enum SITUAZIONE_TYPE {
 }
 
 export enum IMMOBILE_TYPE {
-  Fabbricato,
-  TerrenoEdificabile,
-  TerrenoAgricolo,
+  Fabbricato = "Fabbricato",
+  TerrenoEdificabile = "TerrenoEdificabile",
+  TerrenoAgricolo = "TerrenoAgricolo",
 }
 
 export interface iUnitàVisura {
@@ -22,12 +22,8 @@ export interface iSituazioneVisura {
   type?: SITUAZIONE_TYPE;
   unità?: iUnitàVisura[];
   categoria?: string;
-  rendita?: number;
-
+  rendita?: number; // used for reddito dominicale and valore Venale
   immobileType?: IMMOBILE_TYPE;
-
-  redditoDominicale?: number;
-  valoreVenale?: number;
 }
 
 export interface iVisura {
