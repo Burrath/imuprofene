@@ -173,6 +173,9 @@ function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
             <th className="border px-4 py-2">Anno</th>
             <th className="border px-4 py-2">Rendita</th>
             <th className="border px-4 py-2">Aliquote</th>
+            <th className="border px-4 py-2">Categorie</th>
+            <th className="border px-4 py-2">Coefficenti</th>
+            <th className="border px-4 py-2">Basi Imponibili</th>
             <th className="border px-4 py-2">IMU</th>
           </tr>
         </thead>
@@ -188,10 +191,31 @@ function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
                 )}
               </td>
               <td className="border px-4 py-2">
-                {imuData[year].aliquote.some((a) => a < 0) ? (
+                {!imuData[year].aliquote.length ? (
                   <X className="text-red-500 w-4 h-4" />
                 ) : (
-                  imuData[year].aliquote.join(", ")
+                  imuData[year].aliquote.join(" - ")
+                )}
+              </td>
+              <td className="border px-4 py-2">
+                {!imuData[year].categorie.length ? (
+                  <X className="text-red-500 w-4 h-4" />
+                ) : (
+                  imuData[year].categorie.join(" - ")
+                )}
+              </td>
+              <td className="border px-4 py-2">
+                {!imuData[year].coefficienti.length ? (
+                  <X className="text-red-500 w-4 h-4" />
+                ) : (
+                  imuData[year].coefficienti.join(" - ")
+                )}
+              </td>
+              <td className="border px-4 py-2">
+                {!imuData[year].basiImponibili.length ? (
+                  <X className="text-red-500 w-4 h-4" />
+                ) : (
+                  imuData[year].basiImponibili.join(" - ")
                 )}
               </td>
               <td className="border px-4 py-2">

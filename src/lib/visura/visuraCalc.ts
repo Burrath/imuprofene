@@ -51,8 +51,8 @@ function getSituazioneOfASpecificDate(
 export function getImuCalculation(
   situazione: iSituazioneVisura,
   aliquota: number
-): number {
-  if (!situazione.categoria || !situazione.rendita) return 0;
+) {
+  if (!situazione.categoria || !situazione.rendita) return undefined;
 
   const categoria = situazione.categoria.toUpperCase();
   const rendita = situazione.rendita;
@@ -74,7 +74,7 @@ export function getImuCalculation(
     coefficienti[normalizedCategoria] ??
     coefficienti[normalizedCategoria.slice(0, 1)];
 
-  if (!coeff) return -1;
+  if (!coeff) return undefined;
 
   // Calcolo base imponibile
   const baseImponibile = rendita * 1.05 * coeff;
@@ -82,7 +82,12 @@ export function getImuCalculation(
   // Calcolo IMU
   const imu = baseImponibile * aliquota;
 
-  return Math.round(imu * 100) / 100;
+  return {
+    imu: Math.round(imu * 100) / 100,
+    categoria: normalizedCategoria,
+    coefficente: coeff,
+    baseImponibile: baseImponibile,
+  };
 }
 
 export function calculateImu(
@@ -109,6 +114,20 @@ export function calculateImu(
 
     const daysInYear = getDaysInYear(year);
 
+    const usedAliquote: number[] = [];
+    const usedCategorie: string[] = [];
+    const usedCoefficenti: number[] = [];
+    const usedBaseImponibile: number[] = [];
+
+    result[year] = {
+      imu: 0,
+      rendita: 0,
+      aliquote: [],
+      categorie: [],
+      coefficienti: [],
+      basiImponibili: [],
+    };
+
     for (let day = new Date(end); day > start; day.setDate(day.getDate() - 1)) {
       const relevantSitua = getSituazioneOfASpecificDate(
         new Date(day), // create a new Date to avoid mutation issues
@@ -123,23 +142,26 @@ export function calculateImu(
 
       const imuCalc = getImuCalculation(relevantSitua, aliquota);
 
-      const imu = (result[year]?.imu ?? 0) + imuCalc / daysInYear;
+      if (!imuCalc) continue;
 
-      const rendita =
-        (result[year]?.rendita ?? 0) +
-        (relevantSitua?.rendita ?? 0) / daysInYear;
+      result[year].imu = result[year].imu + imuCalc.imu / daysInYear;
 
-      const usedAliquote = [
-        ...new Set([...(result[year]?.aliquote ?? []), aliquota]),
-      ];
+      result[year].rendita =
+        result[year]?.rendita + (relevantSitua?.rendita ?? 0) / daysInYear;
 
-      result[year] = {
-        imu,
-        rendita,
-        aliquote: usedAliquote,
-      };
+      usedAliquote.push(aliquota);
+      usedCategorie.push(imuCalc.categoria);
+      usedCoefficenti.push(imuCalc.coefficente);
+      usedBaseImponibile.push(imuCalc.baseImponibile);
     }
+
+    result[year].basiImponibili = [...new Set(usedBaseImponibile)];
+    result[year].coefficienti = [...new Set(usedCoefficenti)];
+    result[year].categorie = [...new Set(usedCategorie)];
+    result[year].aliquote = [...new Set(usedAliquote)];
   });
+
+  console.log(result);
 
   return result;
 }

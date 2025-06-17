@@ -35,5 +35,12 @@ export interface iAliquoteComune {
 }
 
 export interface iImuYearData {
-  [year: number]: { rendita: number; imu: number; aliquote: number[] };
+  [year: number]: {
+    rendita: number;
+    imu: number;
+    aliquote: number[];
+    categorie: string[];
+    coefficienti: number[];
+    basiImponibili: number[];
+  };
 }
