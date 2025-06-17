@@ -50,43 +50,75 @@ function getSituazioneOfASpecificDate(
 
 export function getImuCalculation(
   situazione: iSituazioneVisura,
-  aliquota: number
+  aliquota: number,
+  // isEdificabile?: boolean,
+  // isTerreno?: boolean
 ) {
-  if (!situazione.categoria || !situazione.rendita) return undefined;
+  if (!aliquota || aliquota <= 0) return undefined;
 
-  const categoria = situazione.categoria.toUpperCase();
+  const categoria = situazione.categoria?.toUpperCase();
   const rendita = situazione.rendita;
 
-  // Coefficienti in base alla categoria catastale
+  // const redditoDominicale = situazione.redditoDominicale;
+  // const valoreVenale = situazione.valoreVenale;
+
+  // // Caso 1: TERRENO EDIFICABILE
+  // if (isEdificabile && !rendita && valoreVenale) {
+  //   const imu = valoreVenale * aliquota;
+  //   return {
+  //     imu: Math.round(imu * 100) / 100,
+  //     tipo: "Terreno Edificabile",
+  //     baseImponibile: valoreVenale,
+  //   };
+  // }
+
+  // // Caso 2: TERRENO AGRICOLO (NON EDIFICABILE)
+  // if (isTerreno && !rendita && redditoDominicale) {
+  //   const baseImponibile = redditoDominicale * 1.25 * 135;
+  //   const imu = baseImponibile * aliquota;
+  //   return {
+  //     imu: Math.round(imu * 100) / 100,
+  //     tipo: "Terreno Agricolo",
+  //     baseImponibile,
+  //   };
+  // }
+
+  // Caso 3: FABBRICATO
+  if (!categoria || !rendita) return undefined;
+
   const coefficienti: { [key: string]: number } = {
     A: 160,
     A10: 80,
     B: 140,
     C1: 55,
     C: 160,
+    C2: 160,
+    C6: 160,
+    C7: 160,
+    C3: 140,
+    C4: 140,
+    C5: 140,
     D: 65,
     D5: 80,
+    E: 65,
   };
 
-  // Estrai il prefisso rilevante per determinare il coefficiente
-  const normalizedCategoria = categoria.replace(/\//g, "").toUpperCase(); // es: A3 -> A3
+  const normalizedCategoria = categoria.replace(/\//g, "").toUpperCase();
   const coeff =
     coefficienti[normalizedCategoria] ??
     coefficienti[normalizedCategoria.slice(0, 1)];
 
   if (!coeff) return undefined;
 
-  // Calcolo base imponibile
   const baseImponibile = rendita * 1.05 * coeff;
-
-  // Calcolo IMU
   const imu = baseImponibile * aliquota;
 
   return {
     imu: Math.round(imu * 100) / 100,
+    tipo: "Immobile",
     categoria: normalizedCategoria,
     coefficente: coeff,
-    baseImponibile: baseImponibile,
+    baseImponibile,
   };
 }
 
@@ -160,8 +192,6 @@ export function calculateImu(
     result[year].categorie = [...new Set(usedCategorie)];
     result[year].aliquote = [...new Set(usedAliquote)];
   });
-
-  console.log(result);
 
   return result;
 }
