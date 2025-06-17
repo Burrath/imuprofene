@@ -5,6 +5,12 @@ export enum SITUAZIONE_TYPE {
   RenditaRettificata = "RenditaRettificata", // da usare (modifica rispetto alla proposta precendente)
 }
 
+export enum IMMOBILE_TYPE {
+  Fabbricato,
+  TerrenoEdificabile,
+  TerrenoAgricolo,
+}
+
 export interface iUnitàVisura {
   foglio?: string;
   particella?: string;
@@ -17,6 +23,11 @@ export interface iSituazioneVisura {
   unità?: iUnitàVisura[];
   categoria?: string;
   rendita?: number;
+
+  immobileType?: IMMOBILE_TYPE;
+
+  redditoDominicale?: number;
+  valoreVenale?: number;
 }
 
 export interface iVisura {

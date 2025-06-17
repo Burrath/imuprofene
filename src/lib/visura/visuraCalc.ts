@@ -1,4 +1,5 @@
 import {
+  IMMOBILE_TYPE,
   SITUAZIONE_TYPE,
   type iAliquoteComune,
   type iImuYearData,
@@ -50,76 +51,77 @@ function getSituazioneOfASpecificDate(
 
 export function getImuCalculation(
   situazione: iSituazioneVisura,
-  aliquota: number,
-  // isEdificabile?: boolean,
-  // isTerreno?: boolean
+  aliquota: number
 ) {
   if (!aliquota || aliquota <= 0) return undefined;
 
   const categoria = situazione.categoria?.toUpperCase();
   const rendita = situazione.rendita;
 
-  // const redditoDominicale = situazione.redditoDominicale;
-  // const valoreVenale = situazione.valoreVenale;
+  const redditoDominicale = situazione.redditoDominicale;
+  const valoreVenale = situazione.valoreVenale;
+  const type = situazione.immobileType;
 
-  // // Caso 1: TERRENO EDIFICABILE
-  // if (isEdificabile && !rendita && valoreVenale) {
-  //   const imu = valoreVenale * aliquota;
-  //   return {
-  //     imu: Math.round(imu * 100) / 100,
-  //     tipo: "Terreno Edificabile",
-  //     baseImponibile: valoreVenale,
-  //   };
-  // }
+  // Caso 1: TERRENO EDIFICABILE
+  if (type === IMMOBILE_TYPE.TerrenoEdificabile && !rendita && valoreVenale) {
+    const imu = valoreVenale * aliquota;
+    return {
+      imu: Math.round(imu * 100) / 100,
+      categoria: "Terreno Edificabile",
+      baseImponibile: valoreVenale,
+    };
+  }
 
-  // // Caso 2: TERRENO AGRICOLO (NON EDIFICABILE)
-  // if (isTerreno && !rendita && redditoDominicale) {
-  //   const baseImponibile = redditoDominicale * 1.25 * 135;
-  //   const imu = baseImponibile * aliquota;
-  //   return {
-  //     imu: Math.round(imu * 100) / 100,
-  //     tipo: "Terreno Agricolo",
-  //     baseImponibile,
-  //   };
-  // }
+  // Caso 2: TERRENO AGRICOLO (NON EDIFICABILE)
+  if (type === IMMOBILE_TYPE.TerrenoAgricolo && !rendita && redditoDominicale) {
+    const baseImponibile = redditoDominicale * 1.25 * 135;
+    const imu = baseImponibile * aliquota;
+    return {
+      imu: Math.round(imu * 100) / 100,
+      categoria: "Terreno Agricolo",
+      baseImponibile,
+    };
+  }
 
   // Caso 3: FABBRICATO
-  if (!categoria || !rendita) return undefined;
+  if (type === IMMOBILE_TYPE.Fabbricato) {
+    if (!categoria || !rendita) return undefined;
 
-  const coefficienti: { [key: string]: number } = {
-    A: 160,
-    A10: 80,
-    B: 140,
-    C1: 55,
-    C: 160,
-    C2: 160,
-    C6: 160,
-    C7: 160,
-    C3: 140,
-    C4: 140,
-    C5: 140,
-    D: 65,
-    D5: 80,
-    E: 65,
-  };
+    const coefficienti: { [key: string]: number } = {
+      A: 160,
+      A10: 80,
+      B: 140,
+      C1: 55,
+      C: 160,
+      C2: 160,
+      C6: 160,
+      C7: 160,
+      C3: 140,
+      C4: 140,
+      C5: 140,
+      D: 65,
+      D5: 80,
+      E: 65,
+    };
 
-  const normalizedCategoria = categoria.replace(/\//g, "").toUpperCase();
-  const coeff =
-    coefficienti[normalizedCategoria] ??
-    coefficienti[normalizedCategoria.slice(0, 1)];
+    const normalizedCategoria = categoria.replace(/\//g, "").toUpperCase();
+    const coeff =
+      coefficienti[normalizedCategoria] ??
+      coefficienti[normalizedCategoria.slice(0, 1)];
 
-  if (!coeff) return undefined;
+    if (!coeff) return undefined;
 
-  const baseImponibile = rendita * 1.05 * coeff;
-  const imu = baseImponibile * aliquota;
+    const baseImponibile = rendita * 1.05 * coeff;
+    const imu = baseImponibile * aliquota;
 
-  return {
-    imu: Math.round(imu * 100) / 100,
-    tipo: "Immobile",
-    categoria: normalizedCategoria,
-    coefficente: coeff,
-    baseImponibile,
-  };
+    return {
+      imu: Math.round(imu * 100) / 100,
+      tipo: "Immobile",
+      categoria: normalizedCategoria,
+      coefficente: coeff,
+      baseImponibile,
+    };
+  }
 }
 
 export function calculateImu(
@@ -183,7 +185,7 @@ export function calculateImu(
 
       usedAliquote.push(aliquota);
       usedCategorie.push(imuCalc.categoria);
-      usedCoefficenti.push(imuCalc.coefficente);
+      if (imuCalc.coefficente) usedCoefficenti.push(imuCalc.coefficente);
       usedBaseImponibile.push(imuCalc.baseImponibile);
     }
 
