@@ -34,8 +34,9 @@ import { PdfModal } from "./components/PdfModal";
 import { AliquoteModal } from "./components/AliquoteModal";
 import { ImuTableComponent } from "./components/ImuTable";
 import { SituazioniTableComponent } from "./components/SituazioniTable";
+import { ImuTableCombined } from "./components/ImuTableCombined";
 
-type DroppedFile = {
+export type DroppedFile = {
   _id: string;
   file: File;
   refinedData?: iVisura;
@@ -389,11 +390,26 @@ export default function App() {
                   </div>
                 </div>
               ))}
+
+              {!!droppedFiles.find((e) => !!e.imuData) && (
+                <Button
+                  className="mt-5"
+                  size={"sm"}
+                  variant={"secondary"}
+                  onClick={() => setSelectedFileId("all")}
+                >
+                  Vedi tutti
+                </Button>
+              )}
             </div>
           )}
         </div>
 
         <div className="flex flex-col p-4 w-full">
+          {selectedFileId === "all" && (
+            <ImuTableCombined droppedFiles={droppedFiles} minYear={minYear} />
+          )}
+
           {!!droppedFiles.length &&
             selectedFileId &&
             !!droppedFiles.find((f) => f._id === selectedFileId) && (

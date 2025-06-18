@@ -145,8 +145,6 @@ export function calculateImu(
   const result: iImuYearData = {};
 
   years.forEach(async (year) => {
-    console.log("START YEAR", year);
-
     const start = new Date(year, 0, 1); // January 1st of the year
     const end = new Date(year + 1, 0, 1); // December 31st of the year
 
@@ -192,8 +190,6 @@ export function calculateImu(
       const isAnticipo =
         clonedDay > new Date(`${year}-01-01`) &&
         clonedDay < new Date(`${year}-07-01`);
-
-      console.log(isAnticipo);
 
       if (isAnticipo) {
         result[year].imuAnticipo += dailyImu;

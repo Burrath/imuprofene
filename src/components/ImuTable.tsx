@@ -1,12 +1,7 @@
-import { Copy, X } from "lucide-react";
+import { X } from "lucide-react";
 import { formatNumberIT } from "../lib/utils";
 import type { iImuYearData } from "../lib/visura/visuraInterfaces";
-import { Button } from "./ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@radix-ui/react-popover";
+import { CopyPopover } from "./CopyPopover";
 
 export function ImuTableComponent({
   imuData,
@@ -30,7 +25,7 @@ export function ImuTableComponent({
             <th className="border px-4 py-2">Categorie</th>
             <th className="border px-4 py-2">Coefficenti</th>
             <th className="border px-4 py-2">Basi Imponibili</th>
-            <th className="border px-4 py-2">IMU Anticpipo</th>
+            <th className="border px-4 py-2">IMU Anticipo</th>
             <th className="border px-4 py-2">IMU Saldo</th>
             <th className="border px-4 py-2">IMU</th>
           </tr>
@@ -88,24 +83,7 @@ export function ImuTableComponent({
                     `€ ${formatNumberIT(imuData[year].imuAnticipo)}`
                   )}
 
-                  <Popover>
-                    <PopoverTrigger>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (!imuData[year]?.imuAnticipo) return;
-
-                          const valueToCopy =
-                            imuData[year].imuAnticipo.toFixed(2);
-                          navigator.clipboard.writeText(valueToCopy);
-                        }}
-                      >
-                        <Copy />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>Copiato!</PopoverContent>
-                  </Popover>
+                  <CopyPopover value={imuData[year].imuAnticipo.toFixed(2)} />
                 </td>
                 <td className="border px-4 py-2 font-semibold">
                   {imuData[year].imuSaldo < 0 ? (
@@ -114,23 +92,7 @@ export function ImuTableComponent({
                     `€ ${formatNumberIT(imuData[year].imuSaldo)}`
                   )}
 
-                  <Popover>
-                    <PopoverTrigger>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (!imuData[year]?.imuSaldo) return;
-
-                          const valueToCopy = imuData[year].imuSaldo.toFixed(2);
-                          navigator.clipboard.writeText(valueToCopy);
-                        }}
-                      >
-                        <Copy />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>Copiato!</PopoverContent>
-                  </Popover>
+                  <CopyPopover value={imuData[year].imuSaldo.toFixed(2)} />
                 </td>
                 <td className="border px-4 py-2 font-semibold">
                   {imuData[year].imu < 0 ? (
@@ -139,23 +101,7 @@ export function ImuTableComponent({
                     `€ ${formatNumberIT(imuData[year].imu)}`
                   )}
 
-                  <Popover>
-                    <PopoverTrigger>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (!imuData[year]?.imu) return;
-
-                          const valueToCopy = imuData[year].imu.toFixed(2);
-                          navigator.clipboard.writeText(valueToCopy);
-                        }}
-                      >
-                        <Copy />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>Copiato!</PopoverContent>
-                  </Popover>
+                  <CopyPopover value={imuData[year].imu.toFixed(2)} />
                 </td>
               </tr>
             );
