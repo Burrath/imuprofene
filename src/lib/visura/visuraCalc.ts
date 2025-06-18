@@ -190,7 +190,10 @@ export function calculateImu(
 
       // Calcolo per anticipo o saldo
       const isAnticipo =
-        clonedDay.getMonth() < 6 || clonedDay.getFullYear() !== year;
+        clonedDay > new Date(`${year}-01-01`) &&
+        clonedDay < new Date(`${year}-07-01`);
+
+      console.log(isAnticipo);
 
       if (isAnticipo) {
         result[year].imuAnticipo += dailyImu;
