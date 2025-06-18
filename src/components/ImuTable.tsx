@@ -52,7 +52,7 @@ export function ImuTableComponent({
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
                     imuData[year].aliquote
-                      .map((e) => `${formatNumberIT(e)}%`)
+                      .map((e) => `${formatNumberIT(e)}‰`)
                       .join(" - ")
                   )}
                 </td>

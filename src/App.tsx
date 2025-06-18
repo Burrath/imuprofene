@@ -307,7 +307,7 @@ export default function App() {
                   droppedFiles.filter((e) => e.isLoading).length /
                     droppedFiles.length) *
                 100
-              }%`,
+              }‰`,
             }}
           />
         )}
