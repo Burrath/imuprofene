@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "./components/ui/select";
 import { SelectItem } from "@radix-ui/react-select";
+import { formatNumberIT } from "./lib/utils";
 
 function Modal({
   content,
@@ -208,7 +209,7 @@ function ImuTableComponent({
                   {imuData[year].rendita < 0 ? (
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
-                    `€ ${imuData[year].rendita.toFixed(2)}`
+                    `€ ${formatNumberIT(imuData[year].rendita)}`
                   )}
                 </td>
                 <td className="border px-4 py-2">
@@ -237,7 +238,7 @@ function ImuTableComponent({
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
                     imuData[year].basiImponibili
-                      .map((e) => `€ ${e?.toFixed(2)}`)
+                      .map((e) => `€ ${formatNumberIT(e)}`)
                       .join(" - ")
                   )}
                 </td>
@@ -245,7 +246,7 @@ function ImuTableComponent({
                   {imuData[year].imu < 0 ? (
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
-                    `€ ${imuData[year].imu.toFixed(2)}`
+                    `€ ${formatNumberIT(imuData[year].imu)}`
                   )}
                 </td>
               </tr>
@@ -348,7 +349,7 @@ function SituazioniTableComponent({
                   </>
                 ) : (
                   <>
-                    {situazione.rendita?.toFixed(2)}
+                    {formatNumberIT(situazione.rendita ?? 0)}
                     <Button onClick={() => toggleEdit(index)} variant={"ghost"}>
                       <Edit />
                     </Button>
