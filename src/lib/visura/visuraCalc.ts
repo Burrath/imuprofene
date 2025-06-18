@@ -54,7 +54,7 @@ export function getImuCalculation(
   aliquota: number
 ) {
   if (!aliquota || aliquota <= 0) return undefined;
-  aliquota = aliquota / 100;
+  aliquota = aliquota / 1000;
 
   const categoria = situazione.categoria?.toUpperCase();
 
