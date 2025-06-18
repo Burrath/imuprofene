@@ -54,6 +54,7 @@ export function getImuCalculation(
   aliquota: number
 ) {
   if (!aliquota || aliquota <= 0) return undefined;
+  aliquota = aliquota / 100;
 
   const categoria = situazione.categoria?.toUpperCase();
 
@@ -75,7 +76,7 @@ export function getImuCalculation(
 
   // Caso 2: TERRENO AGRICOLO (NON EDIFICABILE)
   if (type === IMMOBILE_TYPE.TerrenoAgricolo && !rendita && redditoDominicale) {
-    const baseImponibile = redditoDominicale * 1.25 * 135;
+    const baseImponibile = redditoDominicale * (1.25 / 100) * 135;
     const imu = baseImponibile * aliquota;
     return {
       imu: Math.round(imu * 100) / 100,
@@ -112,7 +113,7 @@ export function getImuCalculation(
 
     if (!coeff) return undefined;
 
-    const baseImponibile = rendita * 1.05 * coeff;
+    const baseImponibile = rendita * (1.05 / 100) * coeff;
     const imu = baseImponibile * aliquota;
 
     return {

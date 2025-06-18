@@ -68,10 +68,15 @@ export function AliquoteModal({
                         <input
                           onFocus={(e) => e.target.select()}
                           type="number"
-                          step="0.01"
+                          step="0.0001"
                           min="0"
                           className="w-full border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-800 bg-slate-100"
-                          value={aliquote[comune][year][categoria] ?? ""}
+                          value={
+                            typeof aliquote[comune][year][categoria] ===
+                            "number"
+                              ? aliquote[comune][year][categoria]
+                              : ""
+                          }
                           onChange={(e) => {
                             const val = e.target.value;
                             const aliquoteCopy = structuredClone(aliquote);
