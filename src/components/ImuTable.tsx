@@ -14,7 +14,7 @@ export function ImuTableComponent({
     .sort((a, b) => b - a); // sort from newest to oldest
 
   return (
-    <div className="">
+    <div className="text-sm">
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           <tr>

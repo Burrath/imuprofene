@@ -38,7 +38,7 @@ export function SituazioniTableComponent({
   };
 
   return (
-    <div className="">
+    <div className="text-sm">
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           <tr>

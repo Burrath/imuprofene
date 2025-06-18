@@ -3,6 +3,7 @@ import type { DragEvent, ChangeEvent, ReactElement } from "react";
 
 import {
   Calculator,
+  Check,
   ChevronRight,
   Edit,
   Eye,
@@ -23,12 +24,6 @@ import {
 import { parseRawDataToSituazioniVisura } from "./lib/visura/visuraExtract";
 import { calculateImu } from "./lib/visura/visuraCalc";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "./components/ui/accordion";
 import {
   Select,
   SelectContent,
@@ -58,6 +53,7 @@ export default function App() {
   const [modalContent, setModalContent] = useState<ReactElement>();
   const [aliquote, setAliquote] = useState<iAliquoteComune>();
   const [minYear, setMinYear] = useState<number>();
+  const [selectedFileId, setSelectedFileId] = useState<string>();
 
   const currentYear = new Date().getFullYear();
   const years = Array.from(
@@ -211,7 +207,7 @@ export default function App() {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className="h-screen w-screen relative space-y-4 flex flex-col"
+      className="h-screen w-screen relative flex flex-col"
     >
       {isDragging && (
         <>
@@ -225,15 +221,8 @@ export default function App() {
         </>
       )}
 
-      <div className="flex gap-3 m-5">
-        <Button
-          size={"sm"}
-          variant={"outline"}
-          className="rounded-full"
-          onClick={openFileSelector}
-        >
-          <Plus />
-        </Button>
+      <nav className="flex gap-3 border-b px-5 py-2 items-center">
+        <h1 className="font-semibold mr-5">IMUPROFENE</h1>
 
         <Button
           disabled={!droppedFiles.length}
@@ -307,10 +296,10 @@ export default function App() {
         >
           <Recycle />
         </Button>
-      </div>
+      </nav>
 
-      {droppedFiles.filter((e) => e.isLoading).length > 0 && (
-        <div className="h-3 min-h-3 bg-gray-200 mx-3 rounded overflow-hidden">
+      <div className="h-1 min-h-1 bg-gray-200 rounded overflow-hidden">
+        {droppedFiles.filter((e) => e.isLoading).length > 0 && (
           <div
             className="h-full bg-blue-500 transition-all duration-75"
             style={{
@@ -322,27 +311,48 @@ export default function App() {
               }%`,
             }}
           />
-        </div>
-      )}
+        )}
+      </div>
 
-      {droppedFiles.length > 0 && (
-        <div className="flex flex-col gap-3 px-3">
-          {droppedFiles.map((fileObj) => (
-            <div
-              className="relative border-2 border-slate-600 rounded bg-gray-200 flex flex-col"
-              key={fileObj._id}
+      <div className="flex h-full">
+        <div className="w-sm min-w-sm h-full p-2 border-r">
+          <div className="flex justify-center mb-2">
+            <Button
+              size={"sm"}
+              variant={"outline"}
+              className="rounded-full"
+              onClick={openFileSelector}
             >
-              <Accordion type="multiple" className="w-full">
-                <AccordionItem value="exported-data">
-                  <div className="flex flex-row gap-3 items-center">
-                    {fileObj.isLoading && (
-                      <Loader className="animate-spin absolute top-1/2 right-1/2" />
-                    )}
+              Aggiungi visura <Plus />
+            </Button>
+          </div>
+          {droppedFiles.length > 0 && (
+            <div className="flex flex-col w-full">
+              {droppedFiles.map((fileObj) => (
+                <div
+                  className={`relative border-b flex flex-col cursor-pointer w-full ${
+                    fileObj._id === selectedFileId
+                      ? "bg-gray-200"
+                      : "hover:bg-gray-100"
+                  }`}
+                  key={fileObj._id}
+                  onClick={() => setSelectedFileId(fileObj._id)}
+                >
+                  <div className="flex flex-row gap-3 items-center w-full">
+                    <div className="flex items-center w-full">
+                      <Button
+                        size={"sm"}
+                        onClick={() => removeFile(fileObj._id)}
+                        variant={"ghost"}
+                        className="text-red-600"
+                      >
+                        <X />
+                      </Button>
 
-                    <div className="flex items-center w-full px-3">
-                      <AccordionTrigger className="cursor-pointer">
-                        <span>{fileObj.file.name}</span>
-                      </AccordionTrigger>
+                      <span className="text-nowrap truncate text-sm">
+                        {fileObj.file.name}
+                      </span>
+
                       <Button
                         variant="ghost"
                         size="sm"
@@ -352,57 +362,103 @@ export default function App() {
                       >
                         <Eye />
                       </Button>
-                      <Button
-                        onClick={() => removeFile(fileObj._id)}
-                        variant={"ghost"}
-                        className="text-red-600 ml-auto"
-                      >
-                        <X />
-                      </Button>
+
+                      <div className="ml-auto flex">
+                        {fileObj.isLoading && (
+                          <>
+                            <Loader size={20} className="animate-spin" />
+                          </>
+                        )}
+                        {!fileObj.isLoading && (
+                          <>
+                            <Check
+                              className={`${
+                                fileObj.refinedData ? "" : "text-gray-300"
+                              }`}
+                              size={20}
+                            />
+                            <Check
+                              className={`${
+                                fileObj.imuData ? "" : "text-gray-300"
+                              }`}
+                              size={20}
+                            />
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  {fileObj.refinedData && (
-                    <AccordionContent className="border-t border-slate-600 rounded p-3 bg-white">
-                      <div className="flex justify-between mb-2 items-center">
-                        <p className="font-semibold">
-                          Numero visura: {fileObj.refinedData.numero} / Comune:{" "}
-                          {fileObj.refinedData.comune} (
-                          {fileObj.refinedData.codiceComune})
-                        </p>
-                      </div>
-
-                      <SituazioniTableComponent
-                        onChangeVal={(index, val) => {
-                          const droppedFilesCopy =
-                            structuredClone(droppedFiles);
-
-                          droppedFilesCopy.find(
-                            (f) => f._id === fileObj._id
-                          )!.refinedData!.situazioni[index].rendita = val;
-
-                          setDroppedFiles(droppedFilesCopy);
-                        }}
-                        data={fileObj.refinedData}
-                      />
-
-                      {fileObj.imuData && (
-                        <>
-                          <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
-                          <ImuTableComponent
-                            minYear={minYear}
-                            imuData={fileObj.imuData}
-                          />
-                        </>
-                      )}
-                    </AccordionContent>
-                  )}
-                </AccordionItem>
-              </Accordion>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      )}
+
+        <div className="flex flex-col p-2 w-full">
+          {!!droppedFiles.length && selectedFileId && (
+            <>
+              {droppedFiles.find((f) => f._id === selectedFileId)!
+                .refinedData && (
+                <>
+                  <div className="flex justify-between mb-2 items-center">
+                    <p className="font-semibold">
+                      Numero visura:{" "}
+                      {
+                        droppedFiles.find((f) => f._id === selectedFileId)!
+                          .refinedData!.numero
+                      }{" "}
+                      / Comune:{" "}
+                      {
+                        droppedFiles.find((f) => f._id === selectedFileId)!
+                          .refinedData!.comune
+                      }{" "}
+                      (
+                      {
+                        droppedFiles.find((f) => f._id === selectedFileId)!
+                          .refinedData!.codiceComune
+                      }
+                      )
+                    </p>
+                  </div>
+
+                  <SituazioniTableComponent
+                    onChangeVal={(index, val) => {
+                      const droppedFilesCopy = structuredClone(droppedFiles);
+
+                      droppedFilesCopy.find(
+                        (f) =>
+                          f._id ===
+                          droppedFiles.find((f) => f._id === selectedFileId)!
+                            ._id
+                      )!.refinedData!.situazioni[index].rendita = val;
+
+                      setDroppedFiles(droppedFilesCopy);
+                    }}
+                    data={
+                      droppedFiles.find((f) => f._id === selectedFileId)!
+                        .refinedData!
+                    }
+                  />
+
+                  {droppedFiles.find((f) => f._id === selectedFileId)!
+                    .imuData && (
+                    <>
+                      <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
+                      <ImuTableComponent
+                        minYear={minYear}
+                        imuData={
+                          droppedFiles.find((f) => f._id === selectedFileId)!
+                            .imuData!
+                        }
+                      />
+                    </>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Hidden file input */}
       <input
@@ -417,9 +473,6 @@ export default function App() {
         onClose={() => setModalContent(undefined)}
         content={modalContent}
       />
-
-      <br />
-      <br />
     </div>
   );
 }
