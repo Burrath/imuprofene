@@ -1,6 +1,12 @@
-import { X } from "lucide-react";
+import { Copy, X } from "lucide-react";
 import { formatNumberIT } from "../lib/utils";
 import type { iImuYearData } from "../lib/visura/visuraInterfaces";
+import { Button } from "./ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@radix-ui/react-popover";
 
 export function ImuTableComponent({
   imuData,
@@ -77,6 +83,24 @@ export function ImuTableComponent({
                   ) : (
                     `€ ${formatNumberIT(imuData[year].imu)}`
                   )}
+
+                  <Popover>
+                    <PopoverTrigger>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (!imuData[year]?.imu) return;
+
+                          const valueToCopy = imuData[year].imu.toFixed(2);
+                          navigator.clipboard.writeText(valueToCopy);
+                        }}
+                      >
+                        <Copy />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>Copiato!</PopoverContent>
+                  </Popover>
                 </td>
               </tr>
             );

@@ -3,16 +3,13 @@ import type { DragEvent, ChangeEvent, ReactElement } from "react";
 
 import {
   Calculator,
-  Check,
-  ChevronRight,
-  Edit,
   Edit2,
   Eye,
+  FileBox,
   Flame,
   Loader,
   Plus,
   Recycle,
-  Upload,
   X,
 } from "lucide-react";
 import { Button } from "./components/ui/button";
@@ -231,7 +228,7 @@ export default function App() {
           size={"sm"}
         >
           Estrai dati PDF
-          <Upload />
+          <FileBox />
         </Button>
 
         <Button
@@ -373,13 +370,13 @@ export default function App() {
                         )}
                         {!fileObj.isLoading && (
                           <>
-                            <Check
+                            <FileBox
                               className={`${
                                 fileObj.refinedData ? "" : "text-gray-300"
                               }`}
                               size={20}
                             />
-                            <Check
+                            <Calculator
                               className={`${
                                 fileObj.imuData ? "" : "text-gray-300"
                               }`}
