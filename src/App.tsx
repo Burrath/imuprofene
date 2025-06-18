@@ -3,6 +3,7 @@ import type { DragEvent, ChangeEvent, ReactElement } from "react";
 
 import {
   Calculator,
+  Check,
   ChevronRight,
   Edit,
   Eye,
@@ -15,10 +16,10 @@ import {
 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { pdfToRawTextData } from "./lib/pdf";
-import type {
-  iAliquoteComune,
-  iImuYearData,
-  iVisura,
+import {
+  type iAliquoteComune,
+  type iImuYearData,
+  type iVisura,
 } from "./lib/visura/visuraInterfaces";
 import { parseRawDataToSituazioniVisura } from "./lib/visura/visuraExtract";
 import { calculateImu } from "./lib/visura/visuraCalc";
@@ -29,6 +30,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select";
+import { SelectItem } from "@radix-ui/react-select";
 
 function Modal({
   content,
@@ -71,9 +79,11 @@ function PdfModal({ pdf }: { pdf: any }) {
 function AliquoteModal({
   _aliquote,
   _setAliquote,
+  minYear,
 }: {
   _aliquote: iAliquoteComune;
   _setAliquote: (e: iAliquoteComune) => void;
+  minYear?: number;
 }) {
   const [aliquote, setAliquote] = useState<iAliquoteComune>(_aliquote);
 
@@ -91,6 +101,8 @@ function AliquoteModal({
             <h2 className="text-2xl font-bold text-gray-800 mb-2">{comune}</h2>
 
             {years.map((year, yearIndex) => {
+              if (minYear && Number(year) < minYear) return <></>;
+
               const categorie = Object.keys(aliquote[comune][year]).sort();
 
               return (
@@ -160,7 +172,13 @@ function AliquoteModal({
   );
 }
 
-function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
+function ImuTableComponent({
+  imuData,
+  minYear,
+}: {
+  imuData: iImuYearData;
+  minYear?: number;
+}) {
   const sortedYears = Object.keys(imuData)
     .map(Number)
     .sort((a, b) => b - a); // sort from newest to oldest
@@ -171,7 +189,7 @@ function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
         <thead className="bg-gray-100">
           <tr>
             <th className="border px-4 py-2">Anno</th>
-            <th className="border px-4 py-2">Rendita</th>
+            <th className="border px-4 py-2">Rendita - Dominicale - Venale</th>
             <th className="border px-4 py-2">Aliquote</th>
             <th className="border px-4 py-2">Categorie</th>
             <th className="border px-4 py-2">Coefficenti</th>
@@ -180,60 +198,98 @@ function ImuTableComponent({ imuData }: { imuData: iImuYearData }) {
           </tr>
         </thead>
         <tbody>
-          {sortedYears.map((year) => (
-            <tr key={year}>
-              <td className="border px-4 py-2">{year}</td>
-              <td className="border px-4 py-2">
-                {imuData[year].rendita < 0 ? (
-                  <X className="text-red-500 w-4 h-4" />
-                ) : (
-                  `€ ${imuData[year].rendita.toFixed(2)}`
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {!imuData[year].aliquote.length ? (
-                  <X className="text-red-500 w-4 h-4" />
-                ) : (
-                  imuData[year].aliquote.join(" - ")
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {!imuData[year].categorie.length ? (
-                  <X className="text-red-500 w-4 h-4" />
-                ) : (
-                  imuData[year].categorie.join(" - ")
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {!imuData[year].coefficienti.length ? (
-                  <X className="text-red-500 w-4 h-4" />
-                ) : (
-                  imuData[year].coefficienti.join(" - ")
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {!imuData[year].basiImponibili.length ? (
-                  <X className="text-red-500 w-4 h-4" />
-                ) : (
-                  imuData[year].basiImponibili.map((e) => `€ ${e}`).join(" - ")
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {imuData[year].imu < 0 ? (
-                  <X className="text-red-500 w-4 h-4" />
-                ) : (
-                  `€ ${imuData[year].imu.toFixed(2)}`
-                )}
-              </td>
-            </tr>
-          ))}
+          {sortedYears.map((year) => {
+            if (minYear && year < minYear) return <></>;
+
+            return (
+              <tr key={year}>
+                <td className="border px-4 py-2">{year}</td>
+                <td className="border px-4 py-2">
+                  {imuData[year].rendita < 0 ? (
+                    <X className="text-red-500 w-4 h-4" />
+                  ) : (
+                    `€ ${imuData[year].rendita.toFixed(2)}`
+                  )}
+                </td>
+                <td className="border px-4 py-2">
+                  {!imuData[year].aliquote.length ? (
+                    <X className="text-red-500 w-4 h-4" />
+                  ) : (
+                    imuData[year].aliquote.join(" - ")
+                  )}
+                </td>
+                <td className="border px-4 py-2">
+                  {!imuData[year].categorie.length ? (
+                    <X className="text-red-500 w-4 h-4" />
+                  ) : (
+                    imuData[year].categorie.join(" - ")
+                  )}
+                </td>
+                <td className="border px-4 py-2">
+                  {!imuData[year].coefficienti.length ? (
+                    <X className="text-red-500 w-4 h-4" />
+                  ) : (
+                    imuData[year].coefficienti.join(" - ")
+                  )}
+                </td>
+                <td className="border px-4 py-2">
+                  {!imuData[year].basiImponibili.length ? (
+                    <X className="text-red-500 w-4 h-4" />
+                  ) : (
+                    imuData[year].basiImponibili
+                      .map((e) => `€ ${e?.toFixed(2)}`)
+                      .join(" - ")
+                  )}
+                </td>
+                <td className="border px-4 py-2 font-semibold">
+                  {imuData[year].imu < 0 ? (
+                    <X className="text-red-500 w-4 h-4" />
+                  ) : (
+                    `€ ${imuData[year].imu.toFixed(2)}`
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 }
 
-function SituazioniTableComponent({ data }: { data: iVisura }) {
+function SituazioniTableComponent({
+  data,
+  onChangeVal,
+}: {
+  data: iVisura;
+  onChangeVal: (index: number, val: number) => void;
+}) {
+  const [editRow, setEditRow] = useState<{ [index: number]: boolean }>({});
+  const [tempValues, setTempValues] = useState<{ [index: number]: string }>({});
+
+  const toggleEdit = (index: number) => {
+    setEditRow((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+
+    setTempValues((prev) => ({
+      ...prev,
+      [index]: data.situazioni[index].rendita?.toString() || "",
+    }));
+  };
+
+  const handleSave = (index: number) => {
+    const val = parseFloat(tempValues[index]);
+    if (!isNaN(val)) {
+      onChangeVal(index, val);
+    }
+    setEditRow((prev) => ({
+      ...prev,
+      [index]: false,
+    }));
+  };
+
   return (
     <div className="">
       <table className="min-w-full border border-gray-300">
@@ -271,7 +327,33 @@ function SituazioniTableComponent({ data }: { data: iVisura }) {
               <td className="border px-4 py-2">{situazione.immobileType}</td>
               <td className="border px-4 py-2">{situazione.categoria}</td>
               <td className="border px-4 py-2">
-                € {situazione.rendita?.toFixed(2)}
+                €{" "}
+                {editRow[index] ? (
+                  <>
+                    <input
+                      autoFocus
+                      type="number"
+                      value={tempValues[index] || ""}
+                      onChange={(e) =>
+                        setTempValues((prev) => ({
+                          ...prev,
+                          [index]: e.target.value,
+                        }))
+                      }
+                      className="border w-24"
+                    />
+                    <Button onClick={() => handleSave(index)} variant={"ghost"}>
+                      <Check />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {situazione.rendita?.toFixed(2)}
+                    <Button onClick={() => toggleEdit(index)} variant={"ghost"}>
+                      <Edit />
+                    </Button>
+                  </>
+                )}
               </td>
             </tr>
           ))}
@@ -296,6 +378,13 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [modalContent, setModalContent] = useState<ReactElement>();
   const [aliquote, setAliquote] = useState<iAliquoteComune>();
+  const [minYear, setMinYear] = useState<number>();
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from(
+    { length: currentYear - 1970 + 1 },
+    (_, i) => 1970 + i
+  ).reverse();
 
   function generateId() {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -483,6 +572,7 @@ export default function App() {
 
             setModalContent(
               <AliquoteModal
+                minYear={minYear}
                 _setAliquote={(e) => {
                   setAliquote(e);
                   setModalContent(undefined);
@@ -506,6 +596,27 @@ export default function App() {
           <Calculator />
           <ChevronRight />
         </Button>
+
+        <Select
+          onValueChange={(val) => setMinYear(Number(val))}
+          value={minYear?.toString()}
+        >
+          <SelectTrigger className="">
+            {minYear}
+            <SelectValue placeholder={"Select year"} />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((year) => (
+              <SelectItem
+                className="cursor-pointer hover:bg-gray-100 p-1"
+                key={year}
+                value={year.toString()}
+              >
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Button
           onClick={() => {
@@ -583,12 +694,27 @@ export default function App() {
                         </p>
                       </div>
 
-                      <SituazioniTableComponent data={fileObj.refinedData} />
+                      <SituazioniTableComponent
+                        onChangeVal={(index, val) => {
+                          const droppedFilesCopy =
+                            structuredClone(droppedFiles);
+
+                          droppedFilesCopy.find(
+                            (f) => f._id === fileObj._id
+                          )!.refinedData!.situazioni[index].rendita = val;
+
+                          setDroppedFiles(droppedFilesCopy);
+                        }}
+                        data={fileObj.refinedData}
+                      />
 
                       {fileObj.imuData && (
                         <>
                           <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
-                          <ImuTableComponent imuData={fileObj.imuData} />
+                          <ImuTableComponent
+                            minYear={minYear}
+                            imuData={fileObj.imuData}
+                          />
                         </>
                       )}
                     </AccordionContent>
