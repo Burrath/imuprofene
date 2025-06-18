@@ -393,69 +393,71 @@ export default function App() {
           )}
         </div>
 
-        <div className="flex flex-col p-2 w-full">
-          {!!droppedFiles.length && selectedFileId && (
-            <>
-              {droppedFiles.find((f) => f._id === selectedFileId)!
-                .refinedData && (
-                <>
-                  <div className="flex justify-between mb-2 items-center">
-                    <p className="font-semibold">
-                      Numero visura:{" "}
-                      {
-                        droppedFiles.find((f) => f._id === selectedFileId)!
-                          .refinedData!.numero
-                      }{" "}
-                      / Comune:{" "}
-                      {
-                        droppedFiles.find((f) => f._id === selectedFileId)!
-                          .refinedData!.comune
-                      }{" "}
-                      (
-                      {
-                        droppedFiles.find((f) => f._id === selectedFileId)!
-                          .refinedData!.codiceComune
-                      }
-                      )
-                    </p>
-                  </div>
-
-                  <SituazioniTableComponent
-                    onChangeVal={(index, val) => {
-                      const droppedFilesCopy = structuredClone(droppedFiles);
-
-                      droppedFilesCopy.find(
-                        (f) =>
-                          f._id ===
+        <div className="flex flex-col p-4 w-full">
+          {!!droppedFiles.length &&
+            selectedFileId &&
+            !!droppedFiles.find((f) => f._id === selectedFileId) && (
+              <>
+                {droppedFiles.find((f) => f._id === selectedFileId)!
+                  .refinedData && (
+                  <>
+                    <div className="flex justify-between mb-2 items-center">
+                      <p className="font-semibold">
+                        Numero visura:{" "}
+                        {
                           droppedFiles.find((f) => f._id === selectedFileId)!
-                            ._id
-                      )!.refinedData!.situazioni[index].rendita = val;
-
-                      setDroppedFiles(droppedFilesCopy);
-                    }}
-                    data={
-                      droppedFiles.find((f) => f._id === selectedFileId)!
-                        .refinedData!
-                    }
-                  />
-
-                  {droppedFiles.find((f) => f._id === selectedFileId)!
-                    .imuData && (
-                    <>
-                      <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
-                      <ImuTableComponent
-                        minYear={minYear}
-                        imuData={
+                            .refinedData!.numero
+                        }{" "}
+                        / Comune:{" "}
+                        {
                           droppedFiles.find((f) => f._id === selectedFileId)!
-                            .imuData!
+                            .refinedData!.comune
+                        }{" "}
+                        (
+                        {
+                          droppedFiles.find((f) => f._id === selectedFileId)!
+                            .refinedData!.codiceComune
                         }
-                      />
-                    </>
-                  )}
-                </>
-              )}
-            </>
-          )}
+                        )
+                      </p>
+                    </div>
+
+                    <SituazioniTableComponent
+                      onChangeVal={(index, val) => {
+                        const droppedFilesCopy = structuredClone(droppedFiles);
+
+                        droppedFilesCopy.find(
+                          (f) =>
+                            f._id ===
+                            droppedFiles.find((f) => f._id === selectedFileId)!
+                              ._id
+                        )!.refinedData!.situazioni[index].rendita = val;
+
+                        setDroppedFiles(droppedFilesCopy);
+                      }}
+                      data={
+                        droppedFiles.find((f) => f._id === selectedFileId)!
+                          .refinedData!
+                      }
+                    />
+
+                    {droppedFiles.find((f) => f._id === selectedFileId)!
+                      .imuData && (
+                      <>
+                        <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
+                        <ImuTableComponent
+                          minYear={minYear}
+                          imuData={
+                            droppedFiles.find((f) => f._id === selectedFileId)!
+                              .imuData!
+                          }
+                        />
+                      </>
+                    )}
+                  </>
+                )}
+              </>
+            )}
         </div>
       </div>
 

@@ -51,7 +51,9 @@ export function ImuTableComponent({
                   {!imuData[year].aliquote.length ? (
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
-                    imuData[year].aliquote.join(" - ")
+                    imuData[year].aliquote
+                      .map((e) => `${formatNumberIT(e)}%`)
+                      .join(" - ")
                   )}
                 </td>
                 <td className="border px-4 py-2">
