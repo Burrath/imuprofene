@@ -6,6 +6,7 @@ import {
   Check,
   ChevronRight,
   Edit,
+  Edit2,
   Eye,
   Flame,
   Loader,
@@ -229,8 +230,8 @@ export default function App() {
           onClick={runExtract}
           size={"sm"}
         >
+          Estrai dati PDF
           <Upload />
-          <ChevronRight />
         </Button>
 
         <Button
@@ -251,8 +252,8 @@ export default function App() {
           disabled={!droppedFiles.filter((f) => f.refinedData).length}
           size={"sm"}
         >
-          <Edit />
-          <ChevronRight />
+          Imposta aliquote
+          <Edit2 />
         </Button>
 
         <Button
@@ -260,26 +261,27 @@ export default function App() {
           onClick={runCalc}
           size={"sm"}
         >
+          Calcola IMU
           <Calculator />
-          <ChevronRight />
         </Button>
 
         <Select
           onValueChange={(val) => setMinYear(Number(val))}
           value={minYear?.toString()}
         >
-          <SelectTrigger className="">
+          <SelectTrigger className="cursor-pointer">
             {minYear}
-            <SelectValue placeholder={"Select year"} />
+            <SelectValue placeholder={"Filtra per anno"} />
           </SelectTrigger>
           <SelectContent>
             {years.map((year) => (
               <SelectItem
-                className="cursor-pointer hover:bg-gray-100 p-1"
+                className="cursor-pointer hover:bg-gray-100 p-1 text-sm"
                 key={year}
                 value={year.toString()}
               >
-                {year}
+                <span className="font-light">Dal</span>{" "}
+                <span className="font-semibold">{year}</span>
               </SelectItem>
             ))}
           </SelectContent>
