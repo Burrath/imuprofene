@@ -54,7 +54,7 @@ export function getImuCalculation(
   aliquota: number
 ) {
   if (!aliquota || aliquota <= 0) return undefined;
-  aliquota = aliquota / 1000;
+  aliquota = aliquota / 100;
 
   const categoria = situazione.categoria?.toUpperCase();
 
@@ -145,6 +145,8 @@ export function calculateImu(
   const result: iImuYearData = {};
 
   years.forEach(async (year) => {
+    console.log("START YEAR", year);
+
     const start = new Date(year, 0, 1); // January 1st of the year
     const end = new Date(year + 1, 0, 1); // December 31st of the year
 
@@ -157,6 +159,8 @@ export function calculateImu(
 
     result[year] = {
       imu: 0,
+      imuAnticipo: 0,
+      imuSaldo: 0,
       rendita: 0,
       aliquote: [],
       categorie: [],
@@ -165,8 +169,9 @@ export function calculateImu(
     };
 
     for (let day = new Date(end); day > start; day.setDate(day.getDate() - 1)) {
+      const clonedDay = new Date(day); // Evita mutazioni
       const relevantSitua = getSituazioneOfASpecificDate(
-        new Date(day), // create a new Date to avoid mutation issues
+        clonedDay,
         visura.situazioni
       );
 
@@ -180,10 +185,20 @@ export function calculateImu(
 
       if (!imuCalc) continue;
 
-      result[year].imu = result[year].imu + imuCalc.imu / daysInYear;
+      const dailyImu = imuCalc.imu / daysInYear;
+      result[year].imu += dailyImu;
 
-      result[year].rendita =
-        result[year]?.rendita + (relevantSitua?.rendita ?? 0) / daysInYear;
+      // Calcolo per anticipo o saldo
+      const isAnticipo =
+        clonedDay.getMonth() < 6 || clonedDay.getFullYear() !== year;
+
+      if (isAnticipo) {
+        result[year].imuAnticipo += dailyImu;
+      } else {
+        result[year].imuSaldo += dailyImu;
+      }
+
+      result[year].rendita += (relevantSitua.rendita ?? 0) / daysInYear;
 
       usedAliquote.push(aliquota);
       usedCategorie.push(imuCalc.categoria);

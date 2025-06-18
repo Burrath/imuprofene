@@ -30,6 +30,8 @@ export function ImuTableComponent({
             <th className="border px-4 py-2">Categorie</th>
             <th className="border px-4 py-2">Coefficenti</th>
             <th className="border px-4 py-2">Basi Imponibili</th>
+            <th className="border px-4 py-2">IMU Anticpipo</th>
+            <th className="border px-4 py-2">IMU Saldo</th>
             <th className="border px-4 py-2">IMU</th>
           </tr>
         </thead>
@@ -52,7 +54,7 @@ export function ImuTableComponent({
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
                     imuData[year].aliquote
-                      .map((e) => `${formatNumberIT(e)}‰`)
+                      .map((e) => `${formatNumberIT(e)}%`)
                       .join(" - ")
                   )}
                 </td>
@@ -78,6 +80,57 @@ export function ImuTableComponent({
                       .map((e) => `€ ${formatNumberIT(e)}`)
                       .join(" - ")
                   )}
+                </td>
+                <td className="border px-4 py-2 font-semibold">
+                  {imuData[year].imuAnticipo < 0 ? (
+                    <X className="text-red-500 w-4 h-4" />
+                  ) : (
+                    `€ ${formatNumberIT(imuData[year].imuAnticipo)}`
+                  )}
+
+                  <Popover>
+                    <PopoverTrigger>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (!imuData[year]?.imuAnticipo) return;
+
+                          const valueToCopy =
+                            imuData[year].imuAnticipo.toFixed(2);
+                          navigator.clipboard.writeText(valueToCopy);
+                        }}
+                      >
+                        <Copy />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>Copiato!</PopoverContent>
+                  </Popover>
+                </td>
+                <td className="border px-4 py-2 font-semibold">
+                  {imuData[year].imuSaldo < 0 ? (
+                    <X className="text-red-500 w-4 h-4" />
+                  ) : (
+                    `€ ${formatNumberIT(imuData[year].imuSaldo)}`
+                  )}
+
+                  <Popover>
+                    <PopoverTrigger>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (!imuData[year]?.imuSaldo) return;
+
+                          const valueToCopy = imuData[year].imuSaldo.toFixed(2);
+                          navigator.clipboard.writeText(valueToCopy);
+                        }}
+                      >
+                        <Copy />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>Copiato!</PopoverContent>
+                  </Popover>
                 </td>
                 <td className="border px-4 py-2 font-semibold">
                   {imuData[year].imu < 0 ? (

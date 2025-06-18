@@ -307,14 +307,14 @@ export default function App() {
                   droppedFiles.filter((e) => e.isLoading).length /
                     droppedFiles.length) *
                 100
-              }‰`,
+              }%`,
             }}
           />
         )}
       </div>
 
       <div className="flex h-full">
-        <div className="w-sm min-w-sm h-full p-2 border-r">
+        <div className="w-xs min-w-xs h-full p-2 border-r">
           <div className="flex justify-center mb-2">
             <Button
               size={"sm"}
