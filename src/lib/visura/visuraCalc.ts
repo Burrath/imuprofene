@@ -7,46 +7,70 @@ import {
   type iVisura,
 } from "./visuraInterfaces";
 
-function getDaysInYear(year: number): number {
-  return new Date(year, 1, 29).getMonth() === 1 ? 366 : 365;
-}
-
-function getSituazioneOfASpecificDate(
+function getSituazioneOfASpecificMonth(
   date: Date,
   situazioni: iSituazioneVisura[]
-) {
-  // Step 1: Clean up consecutive RenditaProposta, keep only the last of each group
+): iSituazioneVisura | undefined {
+  if (!situazioni.length) return undefined;
+
+  // Ordina dalla più recente alla più vecchia
+  const ordered = [...situazioni].sort(
+    (a, b) => Number(b.dal?.getTime()) - Number(a.dal?.getTime())
+  );
+
+  // Rimuovi RenditaProposta consecutive (tieni solo l’ultima di ciascun gruppo)
   const cleanedSituazioni: iSituazioneVisura[] = [];
-  for (let i = 0; i < situazioni.length; i++) {
-    const current = situazioni[i];
-    const next = situazioni[i + 1];
+  for (let i = 0; i < ordered.length; i++) {
+    const current = ordered[i];
+    const next = ordered[i + 1];
 
     if (
       current.type === SITUAZIONE_TYPE.RenditaProposta &&
       next?.type === SITUAZIONE_TYPE.RenditaProposta
     ) {
-      continue; // skip current, keep only last in sequence
+      continue;
     }
 
     cleanedSituazioni.push(current);
   }
 
-  for (let i = 0; i < situazioni.length; i++) {
-    const situa = situazioni[i];
-    const nextSitua = situazioni[i - 1]; // prev in array but next in time
-    if (!situa.dal) continue;
+  for (let i = 0; i < cleanedSituazioni.length; i++) {
+    const current = cleanedSituazioni[i];
+    const next = cleanedSituazioni[i + 1]; // quella precedente nel tempo
 
-    // if a subsequent situazione rettifies the current proposta send the rettified, becasuse the proposta was not valid
+    if (!current.dal) continue;
+
+    const start = new Date(current.dal);
+    const changeMonth = start.getMonth();
+    const changeYear = start.getFullYear();
+    const changeDay = start.getDate();
+
+    const targetMonth = date.getMonth();
+    const targetYear = date.getFullYear();
+
+    if (changeYear === targetYear && changeMonth === targetMonth) {
+      if (changeDay > 15) {
+        // Cambio dopo il 15 → valido per il mese corrente
+        return current;
+      } else {
+        // Cambio prima o al 15 → valido quello precedente (se esiste)
+        return next ?? current;
+      }
+    }
+
+    // Se la situazione è iniziata dopo il mese richiesto, salta
     if (
-      nextSitua &&
-      situa.dal.getTime() <= date.getTime() &&
-      situa.type === SITUAZIONE_TYPE.RenditaProposta &&
-      nextSitua.type === SITUAZIONE_TYPE.RenditaRettificata
-    )
-      return nextSitua;
+      changeYear > targetYear ||
+      (changeYear === targetYear && changeMonth > targetMonth)
+    ) {
+      continue;
+    }
 
-    if (situa.dal.getTime() < date.getTime()) return situa;
+    // Se la situazione è iniziata prima del mese richiesto ed è la prima valida
+    return current;
   }
+
+  return undefined;
 }
 
 export function getImuCalculation(
@@ -145,11 +169,6 @@ export function calculateImu(
   const result: iImuYearData = {};
 
   years.forEach(async (year) => {
-    const start = new Date(year, 0, 1); // January 1st of the year
-    const end = new Date(year + 1, 0, 1); // December 31st of the year
-
-    const daysInYear = getDaysInYear(year);
-
     const usedAliquote: number[] = [];
     const usedCategorie: string[] = [];
     const usedCoefficenti: number[] = [];
@@ -166,10 +185,10 @@ export function calculateImu(
       basiImponibili: [],
     };
 
-    for (let day = new Date(end); day > start; day.setDate(day.getDate() - 1)) {
-      const clonedDay = new Date(day); // Evita mutazioni
-      const relevantSitua = getSituazioneOfASpecificDate(
-        clonedDay,
+    for (let month = 0; month < 12; month++) {
+      const clonedMonthDate = new Date(year, month, 1);
+      const relevantSitua = getSituazioneOfASpecificMonth(
+        clonedMonthDate,
         visura.situazioni
       );
 
@@ -183,21 +202,18 @@ export function calculateImu(
 
       if (!imuCalc) continue;
 
-      const dailyImu = imuCalc.imu / daysInYear;
-      result[year].imu += dailyImu;
+      const monthlyImu = imuCalc.imu / 12;
+      result[year].imu += monthlyImu;
 
-      // Calcolo per anticipo o saldo
-      const isAnticipo =
-        clonedDay > new Date(`${year}-01-01`) &&
-        clonedDay < new Date(`${year}-07-01`);
+      const isAnticipo = month < 6; // Gen (0) - Giu (5) => Anticipo
 
       if (isAnticipo) {
-        result[year].imuAnticipo += dailyImu;
+        result[year].imuAnticipo += monthlyImu;
       } else {
-        result[year].imuSaldo += dailyImu;
+        result[year].imuSaldo += monthlyImu;
       }
 
-      result[year].rendita += (relevantSitua.rendita ?? 0) / daysInYear;
+      result[year].rendita += (relevantSitua.rendita ?? 0) / 12;
 
       usedAliquote.push(aliquota);
       usedCategorie.push(imuCalc.categoria);
