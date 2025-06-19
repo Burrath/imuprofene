@@ -3,6 +3,7 @@ import type { DragEvent, ChangeEvent, ReactElement } from "react";
 
 import {
   Calculator,
+  Download,
   Edit2,
   Eye,
   FileBox,
@@ -12,6 +13,7 @@ import {
   Loader,
   Plus,
   Recycle,
+  Save,
   TriangleAlert,
   X,
 } from "lucide-react";
@@ -62,6 +64,66 @@ export default function App() {
     { length: currentYear - 1970 + 1 },
     (_, i) => 1970 + i
   ).reverse();
+
+  const save = () => {
+    const data = {
+      droppedFiles: droppedFiles.map((e) => {
+        const dropppedFile: DroppedFile = {
+          _id: e._id,
+          refinedData: e.refinedData,
+          imuData: e.imuData,
+          isLoading: false,
+          file: {
+            name: e.file.name,
+          } as any,
+        };
+
+        return dropppedFile;
+      }),
+      aliquote,
+      minYear,
+    };
+
+    const blob = new Blob([JSON.stringify(data)]);
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `save_${new Date().getTime()}.imuprofene`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Handle the file selection
+  const handleRestoreFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        if (json.aliquote) setAliquote(json.aliquote);
+        if (json.minYear) setMinYear(json.minYear);
+        if (json.droppedFiles) setDroppedFiles(json.droppedFiles);
+        console.log(json.droppedFiles);
+      } catch (err) {
+        console.error("Invalid restore file", err);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset input value to allow re-selecting the same file
+    event.target.value = "";
+  };
+
+  const restore = () => {
+    if (!fileInputRef.current) return;
+
+    fileInputRef.current.click(); // Trigger file selection
+  };
 
   function generateId() {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -135,6 +197,14 @@ export default function App() {
         )
       );
     }
+
+    // Step 3: set all files to !loading
+    setDroppedFiles((prev) =>
+      prev.map((file) => ({
+        ...file,
+        isLoading: false,
+      }))
+    );
   };
 
   useEffect(() => {
@@ -180,7 +250,7 @@ export default function App() {
         .flatMap((f) => f.refinedData?.situazioni ?? []);
 
       const years = situazioni
-        .map((s) => s.dal?.getFullYear())
+        .map((s) => (s.dal ? new Date(s.dal).getFullYear() : ""))
         .filter((e): e is number => typeof e === "number");
 
       const minY = Math.min(...years);
@@ -283,17 +353,39 @@ export default function App() {
           </SelectContent>
         </Select>
 
-        <Button
-          onClick={() => {
-            setDroppedFiles([]);
-            setAliquote(undefined);
-          }}
-          size={"lg"}
-          className="ml-auto text-red-600"
-          variant={"ghost"}
-        >
-          <Recycle />
-        </Button>
+        <div className="flex ml-auto">
+          <Button
+            onClick={() => {
+              restore();
+            }}
+            size={"lg"}
+            className=""
+            variant={"ghost"}
+          >
+            <Download />
+          </Button>
+          <Button
+            onClick={() => {
+              save();
+            }}
+            size={"lg"}
+            className=""
+            variant={"ghost"}
+          >
+            <Save />
+          </Button>
+          <Button
+            onClick={() => {
+              setDroppedFiles([]);
+              setAliquote(undefined);
+            }}
+            size={"lg"}
+            className=" text-red-600"
+            variant={"ghost"}
+          >
+            <Recycle />
+          </Button>
+        </div>
       </nav>
 
       <div className="h-1 min-h-1 bg-gray-200 rounded overflow-hidden">
@@ -326,14 +418,14 @@ export default function App() {
           </div>
           {droppedFiles.length > 0 && (
             <div className="flex flex-col w-full">
-              {droppedFiles.map((fileObj) => (
+              {droppedFiles.map((fileObj, key) => (
                 <div
                   className={`relative border-b flex flex-col cursor-pointer w-full ${
                     fileObj._id === selectedFileId
                       ? "bg-gray-200"
                       : "hover:bg-gray-100"
                   }`}
-                  key={fileObj._id}
+                  key={key}
                   onClick={() => setSelectedFileId(fileObj._id)}
                 >
                   <div className="flex flex-row gap-3 items-center w-full">
@@ -508,6 +600,14 @@ export default function App() {
         ref={fileInputRef}
         onChange={handleFileSelect}
         className="hidden"
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".imuprofene,application/json"
+        style={{ display: "none" }}
+        onChange={handleRestoreFile}
       />
 
       <Modal

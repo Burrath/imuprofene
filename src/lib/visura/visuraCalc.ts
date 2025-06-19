@@ -15,7 +15,9 @@ function getSituazioneOfASpecificMonth(
 
   // Ordina dalla più recente alla più vecchia
   const ordered = [...situazioni].sort(
-    (a, b) => Number(b.dal?.getTime()) - Number(a.dal?.getTime())
+    (a, b) =>
+      (b.dal ? Number(new Date(b.dal).getTime()) : 0) -
+      (a.dal ? Number(new Date(a.dal).getTime()) : 0)
   );
 
   // Rimuovi RenditaProposta consecutive (tieni solo l’ultima di ciascun gruppo)
@@ -158,7 +160,7 @@ export function calculateImu(
   const minYear = Math.min(
     ...visura.situazioni
       .filter((s) => s.dal)
-      .map((s) => s.dal?.getFullYear() ?? 1950)
+      .map((s) => (s.dal ? new Date(s.dal).getFullYear() : 1950))
   );
 
   const years: number[] = Array.from(
