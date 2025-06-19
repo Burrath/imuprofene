@@ -1,6 +1,5 @@
-import { Copy, X } from "lucide-react";
+import { X } from "lucide-react";
 import { formatNumberIT } from "../lib/utils";
-import { Button } from "./ui/button";
 
 import type { DroppedFile } from "../App";
 import { CopyPopover } from "./CopyPopover";
