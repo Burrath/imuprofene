@@ -29,6 +29,7 @@ export function ImuTableCombined({
               <thead className="bg-gray-100">
                 <tr>
                   <th className="border px-4 py-2">File</th>
+                  <th className="border px-4 py-2">Categorie</th>
                   <th className="border px-4 py-2">IMU Anticipo</th>
                   <th className="border px-4 py-2">IMU Saldo</th>
                   <th className="border px-4 py-2">IMU</th>
@@ -43,6 +44,13 @@ export function ImuTableCombined({
                   return (
                     <tr key={fileObj.file.name}>
                       <td className="border px-4 py-2">{fileObj.file.name}</td>
+                      <td className="border px-4 py-2">
+                        {!imuData.categorie.length ? (
+                          <X className="text-red-500 w-4 h-4" />
+                        ) : (
+                          imuData.categorie.join(" - ")
+                        )}
+                      </td>
                       <td className="border px-4 py-2 font-semibold">
                         {imuData.imuAnticipo < 0 ? (
                           <X className="text-red-500 w-4 h-4" />
@@ -72,8 +80,9 @@ export function ImuTableCombined({
                 })}
 
                 {/* Totals row */}
-                <tr className="bg-gray-200 font-bold">
+                <tr className="font-bold">
                   <td className="border px-4 py-2">Totale</td>
+                  <td className="border px-4 py-2"></td>
                   <td className="border px-4 py-2">
                     €{" "}
                     {formatNumberIT(
