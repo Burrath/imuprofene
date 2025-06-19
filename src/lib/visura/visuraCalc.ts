@@ -175,9 +175,6 @@ export function calculateImu(
     const usedBaseImponibile: number[] = [];
 
     result[year] = {
-      imu: 0,
-      imuAnticipo: 0,
-      imuSaldo: 0,
       rendita: 0,
       aliquote: [],
       categorie: [],
@@ -203,14 +200,14 @@ export function calculateImu(
       if (!imuCalc) continue;
 
       const monthlyImu = imuCalc.imu / 12;
-      result[year].imu += monthlyImu;
+      result[year].imu = (result[year].imu ?? 0) + monthlyImu;
 
       const isAnticipo = month < 6; // Gen (0) - Giu (5) => Anticipo
 
       if (isAnticipo) {
-        result[year].imuAnticipo += monthlyImu;
+        result[year].imuAnticipo = (result[year].imuAnticipo ?? 0) + monthlyImu;
       } else {
-        result[year].imuSaldo += monthlyImu;
+        result[year].imuSaldo = (result[year].imuSaldo ?? 0) + monthlyImu;
       }
 
       result[year].rendita += (relevantSitua.rendita ?? 0) / 12;

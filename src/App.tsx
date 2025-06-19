@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { DragEvent, ChangeEvent, ReactElement } from "react";
 
 import {
@@ -115,12 +115,14 @@ export default function App() {
     setDroppedFiles((prev) =>
       prev.map((file) => ({
         ...file,
-        isLoading: true,
+        isLoading: !file.refinedData,
       }))
     );
 
     // Step 2: process files one by one
     for (const file of droppedFiles) {
+      if (file.refinedData) continue;
+
       const rawData = await pdfToRawTextData(file.file);
       const refinedData = parseRawDataToSituazioniVisura(rawData);
 
@@ -135,9 +137,11 @@ export default function App() {
     }
   };
 
-  const runCalc = () => {
-    if (!aliquote) return;
+  useEffect(() => {
+    runExtract();
+  }, [droppedFiles.length]);
 
+  const runCalc = (aliquote: iAliquoteComune, droppedFiles: DroppedFile[]) => {
     // Step 2: process files one by one
     for (const file of droppedFiles) {
       if (!file.refinedData) return;
@@ -150,6 +154,10 @@ export default function App() {
       );
     }
   };
+
+  useEffect(() => {
+    if (aliquote) runCalc(aliquote, droppedFiles);
+  }, [aliquote]);
 
   const removeFile = (id: string) => {
     setDroppedFiles((prev) => prev.filter((file) => file._id !== id));
@@ -227,15 +235,6 @@ export default function App() {
         <h1 className="font-semibold mr-5">IMUPROFENE</h1>
 
         <Button
-          disabled={!droppedFiles.length}
-          onClick={runExtract}
-          size={"sm"}
-        >
-          Estrai dati PDF
-          <FileBox />
-        </Button>
-
-        <Button
           onClick={() => {
             const a = aliquote ?? presetAliquote();
 
@@ -257,21 +256,17 @@ export default function App() {
           <Edit2 />
         </Button>
 
-        <Button
-          disabled={!droppedFiles.length || !aliquote}
-          onClick={runCalc}
-          size={"sm"}
-        >
-          Calcola IMU
-          <Calculator />
-        </Button>
-
         <Select
           onValueChange={(val) => setMinYear(Number(val))}
           value={minYear?.toString()}
         >
           <SelectTrigger className="cursor-pointer">
-            {minYear}
+            {minYear && (
+              <>
+                <span className="font-light">Dal</span>{" "}
+                <span className="font-semibold">{minYear}</span>
+              </>
+            )}
             <SelectValue placeholder={"Filtra per anno"} />
           </SelectTrigger>
           <SelectContent>
@@ -356,17 +351,20 @@ export default function App() {
                         {fileObj.file.name}
                       </span>
 
-                      {!droppedFiles.filter((e) => e.isLoading).length &&
-                        droppedFiles.filter((f) => f.refinedData).length &&
-                        !fileObj.refinedData?.situazioni.length && (
-                          <>
-                            <TriangleAlert
-                              size={17}
-                              className="ml-2 min-w-5"
-                              fill="yellow"
-                            />
-                          </>
-                        )}
+                      {!droppedFiles.filter((e) => e.isLoading).length && (
+                        <>
+                          {droppedFiles.filter((f) => f.refinedData).length &&
+                            !fileObj.refinedData?.situazioni.length && (
+                              <>
+                                <TriangleAlert
+                                  size={17}
+                                  className="ml-2 min-w-5"
+                                  fill="yellow"
+                                />
+                              </>
+                            )}
+                        </>
+                      )}
 
                       <Button
                         variant="ghost"
@@ -388,13 +386,19 @@ export default function App() {
                           <>
                             <FileBox
                               className={`${
-                                fileObj.refinedData ? "" : "text-gray-300"
+                                fileObj.refinedData?.situazioni.length
+                                  ? ""
+                                  : "text-gray-300"
                               }`}
                               size={20}
                             />
                             <Calculator
                               className={`${
-                                fileObj.imuData ? "" : "text-gray-300"
+                                Object.values(fileObj.imuData ?? {}).some(
+                                  (entry) => typeof entry.imu === "number"
+                                )
+                                  ? ""
+                                  : "text-gray-300"
                               }`}
                               size={20}
                             />
@@ -469,6 +473,7 @@ export default function App() {
                         )!.refinedData!.situazioni[index].rendita = val;
 
                         setDroppedFiles(droppedFilesCopy);
+                        if (aliquote) runCalc(aliquote, droppedFilesCopy);
                       }}
                       data={
                         droppedFiles.find((f) => f._id === selectedFileId)!

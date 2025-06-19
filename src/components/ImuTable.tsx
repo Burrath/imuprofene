@@ -77,31 +77,36 @@ export function ImuTableComponent({
                   )}
                 </td>
                 <td className="border px-4 py-2 font-semibold">
-                  {imuData[year].imuAnticipo < 0 ? (
+                  {typeof imuData[year].imuAnticipo !== "number" ? (
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
-                    `€ ${formatNumberIT(imuData[year].imuAnticipo)}`
+                    <>
+                      € {formatNumberIT(imuData[year].imuAnticipo)}
+                      <CopyPopover
+                        value={imuData[year].imuAnticipo.toFixed(2)}
+                      />
+                    </>
                   )}
-
-                  <CopyPopover value={imuData[year].imuAnticipo.toFixed(2)} />
                 </td>
                 <td className="border px-4 py-2 font-semibold">
-                  {imuData[year].imuSaldo < 0 ? (
+                  {typeof imuData[year].imuSaldo !== "number" ? (
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
-                    `€ ${formatNumberIT(imuData[year].imuSaldo)}`
+                    <>
+                      € {formatNumberIT(imuData[year].imuSaldo)}
+                      <CopyPopover value={imuData[year].imuSaldo.toFixed(2)} />
+                    </>
                   )}
-
-                  <CopyPopover value={imuData[year].imuSaldo.toFixed(2)} />
                 </td>
                 <td className="border px-4 py-2 font-semibold">
-                  {imuData[year].imu < 0 ? (
+                  {typeof imuData[year].imu !== "number" ? (
                     <X className="text-red-500 w-4 h-4" />
                   ) : (
-                    `€ ${formatNumberIT(imuData[year].imu)}`
+                    <>
+                      € {formatNumberIT(imuData[year].imu)}
+                      <CopyPopover value={imuData[year].imu.toFixed(2)} />
+                    </>
                   )}
-
-                  <CopyPopover value={imuData[year].imu.toFixed(2)} />
                 </td>
               </tr>
             );

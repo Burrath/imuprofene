@@ -64,7 +64,7 @@ export function ImuTableCombined({
                         )}
                       </td>
                       <td className="border px-4 py-2 font-semibold">
-                        {imuData.imuAnticipo < 0 ? (
+                        {typeof imuData.imuAnticipo !== "number" ? (
                           <X className="text-red-500 w-4 h-4" />
                         ) : (
                           `€ ${formatNumberIT(imuData.imuAnticipo)}`
@@ -72,7 +72,7 @@ export function ImuTableCombined({
                         {/* ...Popover */}
                       </td>
                       <td className="border px-4 py-2 font-semibold">
-                        {imuData.imuSaldo < 0 ? (
+                        {typeof imuData.imuSaldo !== "number" ? (
                           <X className="text-red-500 w-4 h-4" />
                         ) : (
                           `€ ${formatNumberIT(imuData.imuSaldo)}`
@@ -80,7 +80,7 @@ export function ImuTableCombined({
                         {/* ...Popover */}
                       </td>
                       <td className="border px-4 py-2 font-semibold">
-                        {imuData.imu < 0 ? (
+                        {typeof imuData.imu !== "number" ? (
                           <X className="text-red-500 w-4 h-4" />
                         ) : (
                           `€ ${formatNumberIT(imuData.imu)}`
