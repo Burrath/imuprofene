@@ -355,7 +355,8 @@ export default function App() {
                         {fileObj.file.name}
                       </span>
 
-                      {droppedFiles.filter((f) => f.refinedData).length &&
+                      {!droppedFiles.filter((e) => e.isLoading).length &&
+                        droppedFiles.filter((f) => f.refinedData).length &&
                         !fileObj.refinedData?.situazioni.length && (
                           <>
                             <TriangleAlert
