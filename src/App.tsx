@@ -7,6 +7,8 @@ import {
   Eye,
   FileBox,
   Flame,
+  Globe,
+  Linkedin,
   Loader,
   Plus,
   Recycle,
@@ -207,7 +209,7 @@ export default function App() {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className="h-screen w-screen relative flex flex-col"
+      className="h-screen max-h-screen w-screen relative flex flex-col overflow-hidden"
     >
       {isDragging && (
         <>
@@ -315,8 +317,8 @@ export default function App() {
         )}
       </div>
 
-      <div className="flex h-full">
-        <div className="w-xs min-w-xs h-full p-2 border-r">
+      <div className="flex h-full overflow-hidden">
+        <div className="w-xs min-w-xs h-full p-2 border-r overflow-scroll">
           <div className="flex justify-center mb-2">
             <Button
               size={"sm"}
@@ -418,7 +420,7 @@ export default function App() {
           )}
         </div>
 
-        <div className="flex flex-col p-4 w-full">
+        <div className="flex flex-col p-4 w-full overflow-scroll">
           {selectedFileId === "all" && (
             <ImuTableCombined
               onSelect={(fileId) => setSelectedFileId(fileId)}
@@ -507,6 +509,20 @@ export default function App() {
         onClose={() => setModalContent(undefined)}
         content={modalContent}
       />
+
+      <footer className="text-sm font-semibold p-3  border-t flex items-center justify-center gap-2">
+        <p>Made with 💙 by Vincenzo Bonaccorso</p>{" "}
+        <div className="h-5 border-r border-slate-300"></div>
+        <a
+          target="_blank"
+          href="https://www.linkedin.com/in/vincenzo-bonaccorso/"
+        >
+          <Linkedin size={17} />
+        </a>
+        <a target="_blank" href="https://vincenzobonaccorso.it/">
+          <Globe size={17} />
+        </a>
+      </footer>
     </div>
   );
 }
