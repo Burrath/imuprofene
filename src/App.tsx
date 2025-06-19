@@ -10,7 +10,6 @@ import {
   Loader,
   Plus,
   Recycle,
-  Triangle,
   TriangleAlert,
   X,
 } from "lucide-react";
@@ -421,7 +420,11 @@ export default function App() {
 
         <div className="flex flex-col p-4 w-full">
           {selectedFileId === "all" && (
-            <ImuTableCombined droppedFiles={droppedFiles} minYear={minYear} />
+            <ImuTableCombined
+              onSelect={(fileId) => setSelectedFileId(fileId)}
+              droppedFiles={droppedFiles}
+              minYear={minYear}
+            />
           )}
 
           {!!droppedFiles.length &&

@@ -1,15 +1,18 @@
-import { X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import { formatNumberIT } from "../lib/utils";
 
 import type { DroppedFile } from "../App";
 import { CopyPopover } from "./CopyPopover";
+import { Button } from "./ui/button";
 
 export function ImuTableCombined({
   droppedFiles,
   minYear,
+  onSelect,
 }: {
   droppedFiles: DroppedFile[];
   minYear?: number;
+  onSelect: (fileId: string) => void;
 }) {
   const currentYear = new Date().getFullYear();
   const years = Array.from(
@@ -43,7 +46,16 @@ export function ImuTableCombined({
 
                   return (
                     <tr key={fileObj.file.name}>
-                      <td className="border px-4 py-2">{fileObj.file.name}</td>
+                      <td className="border px-4 py-2">
+                        {fileObj.file.name}{" "}
+                        <Button
+                          variant={"ghost"}
+                          size={"sm"}
+                          onClick={() => onSelect(fileObj._id)}
+                        >
+                          <ArrowUpRight />
+                        </Button>
+                      </td>
                       <td className="border px-4 py-2">
                         {!imuData.categorie.length ? (
                           <X className="text-red-500 w-4 h-4" />
