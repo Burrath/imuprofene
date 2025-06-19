@@ -10,6 +10,8 @@ import {
   Loader,
   Plus,
   Recycle,
+  Triangle,
+  TriangleAlert,
   X,
 } from "lucide-react";
 import { Button } from "./components/ui/button";
@@ -352,6 +354,17 @@ export default function App() {
                       <span className="text-nowrap truncate text-sm">
                         {fileObj.file.name}
                       </span>
+
+                      {droppedFiles.filter((f) => f.refinedData).length &&
+                        !fileObj.refinedData?.situazioni.length && (
+                          <>
+                            <TriangleAlert
+                              size={17}
+                              className="ml-2 min-w-5"
+                              fill="yellow"
+                            />
+                          </>
+                        )}
 
                       <Button
                         variant="ghost"
