@@ -461,6 +461,7 @@ export default function App() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        disabled={!fileObj.file.arrayBuffer()}
                         onClick={() =>
                           setModalContent(<PdfModal pdf={fileObj.file} />)
                         }
