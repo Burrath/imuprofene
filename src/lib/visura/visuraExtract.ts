@@ -1,5 +1,7 @@
 import type { pdfToRawTextDataRes } from "../pdf";
 import { isWithinDelta } from "../utils";
+import { FILE_TYPE } from "./fileExtract";
+
 import {
   type iSituazioneVisura,
   type iUnitàVisura,
@@ -8,7 +10,7 @@ import {
   IMMOBILE_TYPE,
 } from "./visuraInterfaces";
 
-function getVisuraNumberFromRawData(rawData: pdfToRawTextDataRes[]): string {
+function getVisuraNumberFromRawDataV1(rawData: pdfToRawTextDataRes[]): string {
   let numero = "";
 
   const nVisuraSlot = rawData.find((e) =>
@@ -21,7 +23,23 @@ function getVisuraNumberFromRawData(rawData: pdfToRawTextDataRes[]): string {
   return numero;
 }
 
-function getComuneAndCodiceFromRawData(rawData: pdfToRawTextDataRes[]): {
+function getVisuraNumberFromRawDataV2(rawData: pdfToRawTextDataRes[]): string {
+  const nVisuraTitleSlot = rawData.find((e) =>
+    e.text.toLowerCase().includes("numero pratica")
+  );
+  if (!nVisuraTitleSlot) return "";
+
+  const nVisuraTextSlot = rawData.find(
+    (e) =>
+      e.y === nVisuraTitleSlot.y &&
+      e.startX > nVisuraTitleSlot.endX &&
+      e.text.trim()
+  );
+
+  return nVisuraTextSlot?.text ?? "";
+}
+
+function getComuneAndCodiceFromRawDataV1(rawData: pdfToRawTextDataRes[]): {
   comune: string;
   codice: string;
 } {
@@ -47,8 +65,31 @@ function getComuneAndCodiceFromRawData(rawData: pdfToRawTextDataRes[]): {
 
   return { comune, codice };
 }
+function getComuneAndCodiceFromRawDataV2(rawData: pdfToRawTextDataRes[]): {
+  comune: string;
+  codice: string;
+} {
+  const titleSlot = rawData.find((e) =>
+    e.text.toLowerCase().includes("comune di")
+  );
 
-function getSituazioniFromRawData(
+  if (!titleSlot) return { comune: "", codice: "" };
+
+  const comuneSlot = rawData.find(
+    (e) => e.y === titleSlot.y && e.startX > titleSlot.endX && e.text.trim()
+  );
+
+  if (!comuneSlot) return { comune: "", codice: "" };
+
+  const match = comuneSlot.text.match(/^(.+?) \((\w\d{3})\)/);
+
+  if (!match) return { comune: "", codice: "" };
+
+  const [, comune, codice] = match;
+  return { comune, codice };
+}
+
+function getSituazioniFromRawDataV1(
   rawData: pdfToRawTextDataRes[]
 ): iSituazioneVisura[] {
   const situazioni: iSituazioneVisura[] = [];
@@ -304,17 +345,38 @@ function getSituazioniFromRawData(
   return situazioni;
 }
 
-export function parseRawDataToSituazioniVisura(
+function getSituazioniFromRawDataV2(
   rawData: pdfToRawTextDataRes[]
+): iSituazioneVisura[] {
+  // TODO
+
+  return [];
+}
+
+export function parseRawDataToSituazioniVisura(
+  rawData: pdfToRawTextDataRes[],
+  fileType: FILE_TYPE
 ): iVisura {
-  // get the visura number
-  const numero = getVisuraNumberFromRawData(rawData);
+  if (fileType === FILE_TYPE.visura_v1) {
+    const numero = getVisuraNumberFromRawDataV1(rawData);
+    const { comune, codice } = getComuneAndCodiceFromRawDataV1(rawData);
+    const situazioni = getSituazioniFromRawDataV1(rawData);
 
-  // get the comune
-  const { comune, codice } = getComuneAndCodiceFromRawData(rawData);
+    return { numero, situazioni, comune, codiceComune: codice };
+  }
 
-  // get the situazioni
-  const situazioni = getSituazioniFromRawData(rawData);
+  if (fileType === FILE_TYPE.visura_v2) {
+    const numero = getVisuraNumberFromRawDataV2(rawData);
+    const { comune, codice } = getComuneAndCodiceFromRawDataV2(rawData);
+    const situazioni = getSituazioniFromRawDataV2(rawData);
 
-  return { numero, situazioni, comune, codiceComune: codice };
+    return { numero, situazioni, comune, codiceComune: codice };
+  }
+
+  return {
+    numero: "",
+    situazioni: [],
+    comune: "",
+    codiceComune: "",
+  };
 }

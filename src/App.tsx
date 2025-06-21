@@ -40,11 +40,13 @@ import { AliquoteModal } from "./components/AliquoteModal";
 import { ImuTableComponent } from "./components/ImuTable";
 import { SituazioniTableComponent } from "./components/SituazioniTable";
 import { ImuTableCombined } from "./components/ImuTableCombined";
+import getFileType, { FILE_TYPE } from "./lib/visura/fileExtract";
 
 export type DroppedFile = {
   _id: string;
+  fileType?: FILE_TYPE;
   file: File;
-  refinedData?: iVisura;
+  refinedVisuraData?: iVisura;
   imuData?: iImuYearData;
   isLoading: boolean;
 };
@@ -70,9 +72,10 @@ export default function App() {
       droppedFiles: droppedFiles.map((e) => {
         const dropppedFile: DroppedFile = {
           _id: e._id,
-          refinedData: e.refinedData,
+          refinedVisuraData: e.refinedVisuraData,
           imuData: e.imuData,
           isLoading: false,
+          fileType: e.fileType,
           file: {
             name: e.file.name,
           } as any,
@@ -177,22 +180,32 @@ export default function App() {
     setDroppedFiles((prev) =>
       prev.map((file) => ({
         ...file,
-        isLoading: !file.refinedData,
+        isLoading: !file.refinedVisuraData,
       }))
     );
 
     // Step 2: process files one by one
     for (const file of droppedFiles) {
-      if (file.refinedData) continue;
+      if (
+        (file.fileType === FILE_TYPE.visura_v1 ||
+          file.fileType === FILE_TYPE.visura_v2) &&
+        file.refinedVisuraData
+      )
+        continue;
 
       const rawData = await pdfToRawTextData(file.file);
-      const refinedData = parseRawDataToSituazioniVisura(rawData);
+
+      const fileType = getFileType(rawData);
+
+      let refinedVisuraData: any;
+      if (fileType === FILE_TYPE.visura_v1 || fileType === FILE_TYPE.visura_v2)
+        refinedVisuraData = parseRawDataToSituazioniVisura(rawData, fileType);
 
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>
         prev.map((f) =>
           f._id === file._id
-            ? { ...f, rawData, isLoading: false, refinedData }
+            ? { ...f, rawData, isLoading: false, refinedVisuraData }
             : f
         )
       );
@@ -214,9 +227,9 @@ export default function App() {
   const runCalc = (aliquote: iAliquoteComune, droppedFiles: DroppedFile[]) => {
     // Step 2: process files one by one
     for (const file of droppedFiles) {
-      if (!file.refinedData) return;
+      if (!file.refinedVisuraData) return;
 
-      const imuData = calculateImu(file.refinedData, aliquote);
+      const imuData = calculateImu(file.refinedVisuraData, aliquote);
 
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>
@@ -237,7 +250,7 @@ export default function App() {
     const aliquote: iAliquoteComune = {};
 
     const comuni = droppedFiles
-      .map((fileObj) => fileObj.refinedData?.comune)
+      .map((fileObj) => fileObj.refinedVisuraData?.comune)
       .filter((e) => e);
 
     const comuniUnique = [...new Set(comuni)];
@@ -246,8 +259,8 @@ export default function App() {
       if (!comune) return;
 
       const situazioni = droppedFiles
-        .filter((f) => f.refinedData?.comune === comune)
-        .flatMap((f) => f.refinedData?.situazioni ?? []);
+        .filter((f) => f.refinedVisuraData?.comune === comune)
+        .flatMap((f) => f.refinedVisuraData?.situazioni ?? []);
 
       const years = situazioni
         .map((s) => (s.dal ? new Date(s.dal).getFullYear() : ""))
@@ -319,7 +332,7 @@ export default function App() {
               />
             );
           }}
-          disabled={!droppedFiles.filter((f) => f.refinedData).length}
+          disabled={!droppedFiles.filter((f) => f.refinedVisuraData).length}
           size={"sm"}
         >
           Imposta aliquote
@@ -445,8 +458,9 @@ export default function App() {
 
                       {!droppedFiles.filter((e) => e.isLoading).length && (
                         <>
-                          {droppedFiles.filter((f) => f.refinedData).length &&
-                            !fileObj.refinedData?.situazioni.length && (
+                          {droppedFiles.filter((f) => f.refinedVisuraData)
+                            .length &&
+                            !fileObj.refinedVisuraData?.situazioni.length && (
                               <>
                                 <TriangleAlert
                                   size={17}
@@ -479,7 +493,7 @@ export default function App() {
                           <>
                             <FileBox
                               className={`${
-                                fileObj.refinedData?.situazioni.length
+                                fileObj.refinedVisuraData?.situazioni.length
                                   ? ""
                                   : "text-gray-300"
                               }`}
@@ -531,24 +545,24 @@ export default function App() {
             !!droppedFiles.find((f) => f._id === selectedFileId) && (
               <>
                 {droppedFiles.find((f) => f._id === selectedFileId)!
-                  .refinedData && (
+                  .refinedVisuraData && (
                   <>
                     <div className="flex justify-between mb-2 items-center">
                       <p className="font-semibold">
                         Numero visura:{" "}
                         {
                           droppedFiles.find((f) => f._id === selectedFileId)!
-                            .refinedData!.numero
+                            .refinedVisuraData!.numero
                         }{" "}
                         / Comune:{" "}
                         {
                           droppedFiles.find((f) => f._id === selectedFileId)!
-                            .refinedData!.comune
+                            .refinedVisuraData!.comune
                         }{" "}
                         (
                         {
                           droppedFiles.find((f) => f._id === selectedFileId)!
-                            .refinedData!.codiceComune
+                            .refinedVisuraData!.codiceComune
                         }
                         )
                       </p>
@@ -563,14 +577,14 @@ export default function App() {
                             f._id ===
                             droppedFiles.find((f) => f._id === selectedFileId)!
                               ._id
-                        )!.refinedData!.situazioni[index].rendita = val;
+                        )!.refinedVisuraData!.situazioni[index].rendita = val;
 
                         setDroppedFiles(droppedFilesCopy);
                         if (aliquote) runCalc(aliquote, droppedFilesCopy);
                       }}
                       data={
                         droppedFiles.find((f) => f._id === selectedFileId)!
-                          .refinedData!
+                          .refinedVisuraData!
                       }
                     />
 
