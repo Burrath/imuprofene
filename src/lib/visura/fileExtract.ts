@@ -17,6 +17,8 @@ export default function getRawFileType(
     if (data.text.toLowerCase().includes("numero pratica"))
       return RAW_FILE_TYPE.visura_v2;
     if (data.text.toLowerCase().includes("f24")) return RAW_FILE_TYPE.f24;
+    if (data.text.toLowerCase().includes("estremi del versamento"))
+      return RAW_FILE_TYPE.f24;
   }
 
   return RAW_FILE_TYPE.visura_v1;
