@@ -343,28 +343,6 @@ export default function App() {
       <nav className="flex gap-3 border-b px-5 py-2 items-center">
         <h1 className="font-semibold mr-5">IMUPROFENE</h1>
 
-        <Button
-          onClick={() => {
-            const a = aliquote ?? presetAliquote();
-
-            setModalContent(
-              <AliquoteModal
-                minYear={minYear}
-                _setAliquote={(e) => {
-                  setAliquote(e);
-                  setModalContent(undefined);
-                }}
-                _aliquote={a}
-              />
-            );
-          }}
-          disabled={!droppedFiles.filter((f) => f.refinedVisuraData).length}
-          size={"sm"}
-        >
-          Imposta aliquote
-          <Edit2 />
-        </Button>
-
         <Select
           onValueChange={(val) => setMinYear(Number(val))}
           value={minYear?.toString()}
@@ -391,6 +369,28 @@ export default function App() {
             ))}
           </SelectContent>
         </Select>
+
+        <Button
+          onClick={() => {
+            const a = aliquote ?? presetAliquote();
+
+            setModalContent(
+              <AliquoteModal
+                minYear={minYear}
+                _setAliquote={(e) => {
+                  setAliquote(e);
+                  setModalContent(undefined);
+                }}
+                _aliquote={a}
+              />
+            );
+          }}
+          disabled={!droppedFiles.filter((f) => f.refinedVisuraData).length}
+          size={"sm"}
+        >
+          Imposta aliquote
+          <Edit2 />
+        </Button>
 
         <div className="flex ml-auto">
           <Button
@@ -459,6 +459,10 @@ export default function App() {
           {droppedFiles.length > 0 && (
             <>
               <div className="flex flex-col w-full">
+                {!!droppedFiles.filter((f) => f.fileType === "visura")
+                  .length && (
+                  <span className="font-semibold text-sm">Visure</span>
+                )}
                 {droppedFiles
                   .filter((f) => f.fileType === "visura")
                   .map((fileObj, key) => (
@@ -559,8 +563,12 @@ export default function App() {
                   </Button>
                 )}
               </div>
-              <hr />
+
               <div className="flex flex-col w-full">
+                {!!droppedFiles.filter((f) => f.fileType === "f24").length && (
+                  <span className="font-semibold text-sm mt-4">F24</span>
+                )}
+
                 {droppedFiles
                   .filter((f) => f.fileType === "f24")
                   .map((fileObj, key) => (
@@ -590,18 +598,16 @@ export default function App() {
 
                           {!droppedFiles.filter((e) => e.isLoading).length && (
                             <>
-                              {droppedFiles.filter((f) => f.refinedVisuraData)
-                                .length &&
-                                !fileObj.refinedVisuraData?.situazioni
-                                  .length && (
-                                  <>
-                                    <TriangleAlert
-                                      size={17}
-                                      className="ml-2 min-w-5"
-                                      fill="yellow"
-                                    />
-                                  </>
-                                )}
+                              {!droppedFiles.filter((f) => f.f24Data)
+                                .length && (
+                                <>
+                                  <TriangleAlert
+                                    size={17}
+                                    className="ml-2 min-w-5"
+                                    fill="yellow"
+                                  />
+                                </>
+                              )}
                             </>
                           )}
 
@@ -626,19 +632,7 @@ export default function App() {
                               <>
                                 <FileBox
                                   className={`${
-                                    fileObj.refinedVisuraData?.situazioni.length
-                                      ? ""
-                                      : "text-gray-300"
-                                  }`}
-                                  size={20}
-                                />
-                                <Calculator
-                                  className={`${
-                                    Object.values(fileObj.imuData ?? {}).some(
-                                      (entry) => typeof entry.imu === "number"
-                                    )
-                                      ? ""
-                                      : "text-gray-300"
+                                    fileObj.f24Data ? "" : "text-gray-300"
                                   }`}
                                   size={20}
                                 />
