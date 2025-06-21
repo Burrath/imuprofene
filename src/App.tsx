@@ -214,7 +214,10 @@ export default function App() {
       }
 
       let f24Data: iF24;
-      if (rawFileType === RAW_FILE_TYPE.f24) {
+      if (
+        rawFileType === RAW_FILE_TYPE.f24 ||
+        rawFileType === RAW_FILE_TYPE.quietanzaf24
+      ) {
         f24Data = parseDataFromF24RawData(rawData);
         fileType = "f24";
       }

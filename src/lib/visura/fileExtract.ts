@@ -4,6 +4,7 @@ export enum RAW_FILE_TYPE {
   visura_v1 = "visura_v1",
   visura_v2 = "visura_v2",
   f24 = "f24",
+  quietanzaf24 = "quietanzaf24",
 }
 
 export default function getRawFileType(
@@ -18,7 +19,7 @@ export default function getRawFileType(
       return RAW_FILE_TYPE.visura_v2;
     if (data.text.toLowerCase().includes("f24")) return RAW_FILE_TYPE.f24;
     if (data.text.toLowerCase().includes("estremi del versamento"))
-      return RAW_FILE_TYPE.f24;
+      return RAW_FILE_TYPE.quietanzaf24;
   }
 
   return RAW_FILE_TYPE.visura_v1;
