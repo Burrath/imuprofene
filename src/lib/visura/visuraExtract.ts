@@ -1,6 +1,6 @@
 import type { pdfToRawTextDataRes } from "../pdf";
 import { isWithinDelta } from "../utils";
-import { FILE_TYPE } from "./fileExtract";
+import { RAW_FILE_TYPE } from "./fileExtract";
 
 import {
   type iSituazioneVisura,
@@ -355,9 +355,9 @@ function getSituazioniFromRawDataV2(
 
 export function parseRawDataToSituazioniVisura(
   rawData: pdfToRawTextDataRes[],
-  fileType: FILE_TYPE
+  rawFileType: RAW_FILE_TYPE
 ): iVisura {
-  if (fileType === FILE_TYPE.visura_v1) {
+  if (rawFileType === RAW_FILE_TYPE.visura_v1) {
     const numero = getVisuraNumberFromRawDataV1(rawData);
     const { comune, codice } = getComuneAndCodiceFromRawDataV1(rawData);
     const situazioni = getSituazioniFromRawDataV1(rawData);
@@ -365,7 +365,7 @@ export function parseRawDataToSituazioniVisura(
     return { numero, situazioni, comune, codiceComune: codice };
   }
 
-  if (fileType === FILE_TYPE.visura_v2) {
+  if (rawFileType === RAW_FILE_TYPE.visura_v2) {
     const numero = getVisuraNumberFromRawDataV2(rawData);
     const { comune, codice } = getComuneAndCodiceFromRawDataV2(rawData);
     const situazioni = getSituazioniFromRawDataV2(rawData);

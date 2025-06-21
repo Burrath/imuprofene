@@ -40,14 +40,19 @@ import { AliquoteModal } from "./components/AliquoteModal";
 import { ImuTableComponent } from "./components/ImuTable";
 import { SituazioniTableComponent } from "./components/SituazioniTable";
 import { ImuTableCombined } from "./components/ImuTableCombined";
-import getFileType, { FILE_TYPE } from "./lib/visura/fileExtract";
+import { RAW_FILE_TYPE } from "./lib/visura/fileExtract";
+import type { iF24 } from "./lib/visura/f24Interfaces";
+import parseDataFromF24RawData from "./lib/visura/f24Extract";
+import getRawFileType from "./lib/visura/fileExtract";
 
 export type DroppedFile = {
   _id: string;
-  fileType?: FILE_TYPE;
+  rawFileType?: RAW_FILE_TYPE;
+  fileType?: "f24" | "visura";
   file: File;
   refinedVisuraData?: iVisura;
   imuData?: iImuYearData;
+  f24Data?: iF24;
   isLoading: boolean;
 };
 
@@ -76,6 +81,7 @@ export default function App() {
           imuData: e.imuData,
           isLoading: false,
           fileType: e.fileType,
+          rawFileType: e.rawFileType,
           file: {
             name: e.file.name,
           } as any,
@@ -111,7 +117,6 @@ export default function App() {
         if (json.aliquote) setAliquote(json.aliquote);
         if (json.minYear) setMinYear(json.minYear);
         if (json.droppedFiles) setDroppedFiles(json.droppedFiles);
-        console.log(json.droppedFiles);
       } catch (err) {
         console.error("Invalid restore file", err);
       }
@@ -186,26 +191,47 @@ export default function App() {
 
     // Step 2: process files one by one
     for (const file of droppedFiles) {
-      if (
-        (file.fileType === FILE_TYPE.visura_v1 ||
-          file.fileType === FILE_TYPE.visura_v2) &&
-        file.refinedVisuraData
-      )
-        continue;
+      if (file.fileType === "visura" && file.refinedVisuraData) continue;
+
+      if (file.fileType === "f24" && file.f24Data) continue;
 
       const rawData = await pdfToRawTextData(file.file);
 
-      const fileType = getFileType(rawData);
+      const rawFileType = getRawFileType(rawData);
 
-      let refinedVisuraData: any;
-      if (fileType === FILE_TYPE.visura_v1 || fileType === FILE_TYPE.visura_v2)
-        refinedVisuraData = parseRawDataToSituazioniVisura(rawData, fileType);
+      let fileType: "visura" | "f24";
+
+      let refinedVisuraData: iVisura;
+      if (
+        rawFileType === RAW_FILE_TYPE.visura_v1 ||
+        rawFileType === RAW_FILE_TYPE.visura_v2
+      ) {
+        refinedVisuraData = parseRawDataToSituazioniVisura(
+          rawData,
+          rawFileType
+        );
+        fileType = "visura";
+      }
+
+      let f24Data: iF24;
+      if (rawFileType === RAW_FILE_TYPE.f24) {
+        f24Data = parseDataFromF24RawData(rawData);
+        fileType = "f24";
+      }
 
       // Step 3: update only that file in state
       setDroppedFiles((prev) =>
         prev.map((f) =>
           f._id === file._id
-            ? { ...f, rawData, isLoading: false, refinedVisuraData }
+            ? {
+                ...f,
+                rawData,
+                isLoading: false,
+                refinedVisuraData,
+                f24Data,
+                rawFileType,
+                fileType,
+              }
             : f
         )
       );
@@ -426,108 +452,216 @@ export default function App() {
               className="rounded-full"
               onClick={openFileSelector}
             >
-              Aggiungi visura <Plus />
+              Aggiungi file <Plus />
             </Button>
           </div>
+
           {droppedFiles.length > 0 && (
-            <div className="flex flex-col w-full">
-              {droppedFiles.map((fileObj, key) => (
-                <div
-                  className={`relative border-b flex flex-col cursor-pointer w-full ${
-                    fileObj._id === selectedFileId
-                      ? "bg-gray-200"
-                      : "hover:bg-gray-100"
-                  }`}
-                  key={key}
-                  onClick={() => setSelectedFileId(fileObj._id)}
-                >
-                  <div className="flex flex-row gap-3 items-center w-full">
-                    <div className="flex items-center w-full">
-                      <Button
-                        size={"sm"}
-                        onClick={() => removeFile(fileObj._id)}
-                        variant={"ghost"}
-                        className="text-red-600"
-                      >
-                        <X />
-                      </Button>
+            <>
+              <div className="flex flex-col w-full">
+                {droppedFiles
+                  .filter((f) => f.fileType === "visura")
+                  .map((fileObj, key) => (
+                    <div
+                      className={`relative border-b flex flex-col cursor-pointer w-full ${
+                        fileObj._id === selectedFileId
+                          ? "bg-gray-200"
+                          : "hover:bg-gray-100"
+                      }`}
+                      key={key}
+                      onClick={() => setSelectedFileId(fileObj._id)}
+                    >
+                      <div className="flex flex-row gap-3 items-center w-full">
+                        <div className="flex items-center w-full">
+                          <Button
+                            size={"sm"}
+                            onClick={() => removeFile(fileObj._id)}
+                            variant={"ghost"}
+                            className="text-red-600"
+                          >
+                            <X />
+                          </Button>
 
-                      <span className="text-nowrap truncate text-sm">
-                        {fileObj.file.name}
-                      </span>
+                          <span className="text-nowrap truncate text-sm">
+                            {fileObj.file.name}
+                          </span>
 
-                      {!droppedFiles.filter((e) => e.isLoading).length && (
-                        <>
-                          {droppedFiles.filter((f) => f.refinedVisuraData)
-                            .length &&
-                            !fileObj.refinedVisuraData?.situazioni.length && (
+                          {!droppedFiles.filter((e) => e.isLoading).length && (
+                            <>
+                              {droppedFiles.filter((f) => f.refinedVisuraData)
+                                .length &&
+                                !fileObj.refinedVisuraData?.situazioni
+                                  .length && (
+                                  <>
+                                    <TriangleAlert
+                                      size={17}
+                                      className="ml-2 min-w-5"
+                                      fill="yellow"
+                                    />
+                                  </>
+                                )}
+                            </>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={!fileObj.file.arrayBuffer}
+                            onClick={() =>
+                              setModalContent(<PdfModal pdf={fileObj.file} />)
+                            }
+                          >
+                            <Eye />
+                          </Button>
+
+                          <div className="ml-auto flex">
+                            {fileObj.isLoading && (
                               <>
-                                <TriangleAlert
-                                  size={17}
-                                  className="ml-2 min-w-5"
-                                  fill="yellow"
+                                <Loader size={20} className="animate-spin" />
+                              </>
+                            )}
+                            {!fileObj.isLoading && (
+                              <>
+                                <FileBox
+                                  className={`${
+                                    fileObj.refinedVisuraData?.situazioni.length
+                                      ? ""
+                                      : "text-gray-300"
+                                  }`}
+                                  size={20}
+                                />
+                                <Calculator
+                                  className={`${
+                                    Object.values(fileObj.imuData ?? {}).some(
+                                      (entry) => typeof entry.imu === "number"
+                                    )
+                                      ? ""
+                                      : "text-gray-300"
+                                  }`}
+                                  size={20}
                                 />
                               </>
                             )}
-                        </>
-                      )}
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={!fileObj.file.arrayBuffer}
-                        onClick={() =>
-                          setModalContent(<PdfModal pdf={fileObj.file} />)
-                        }
-                      >
-                        <Eye />
-                      </Button>
-
-                      <div className="ml-auto flex">
-                        {fileObj.isLoading && (
-                          <>
-                            <Loader size={20} className="animate-spin" />
-                          </>
-                        )}
-                        {!fileObj.isLoading && (
-                          <>
-                            <FileBox
-                              className={`${
-                                fileObj.refinedVisuraData?.situazioni.length
-                                  ? ""
-                                  : "text-gray-300"
-                              }`}
-                              size={20}
-                            />
-                            <Calculator
-                              className={`${
-                                Object.values(fileObj.imuData ?? {}).some(
-                                  (entry) => typeof entry.imu === "number"
-                                )
-                                  ? ""
-                                  : "text-gray-300"
-                              }`}
-                              size={20}
-                            />
-                          </>
-                        )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  ))}
 
-              {!!droppedFiles.find((e) => !!e.imuData) && (
-                <Button
-                  className="mt-5"
-                  size={"sm"}
-                  variant={"secondary"}
-                  onClick={() => setSelectedFileId("all")}
-                >
-                  Vedi tutti
-                </Button>
-              )}
-            </div>
+                {!!droppedFiles.find((e) => !!e.imuData) && (
+                  <Button
+                    className="mt-5"
+                    size={"sm"}
+                    variant={"secondary"}
+                    onClick={() => setSelectedFileId("all")}
+                  >
+                    Vedi tutti
+                  </Button>
+                )}
+              </div>
+              <hr />
+              <div className="flex flex-col w-full">
+                {droppedFiles
+                  .filter((f) => f.fileType === "f24")
+                  .map((fileObj, key) => (
+                    <div
+                      className={`relative border-b flex flex-col cursor-pointer w-full ${
+                        fileObj._id === selectedFileId
+                          ? "bg-gray-200"
+                          : "hover:bg-gray-100"
+                      }`}
+                      key={key}
+                      onClick={() => setSelectedFileId(fileObj._id)}
+                    >
+                      <div className="flex flex-row gap-3 items-center w-full">
+                        <div className="flex items-center w-full">
+                          <Button
+                            size={"sm"}
+                            onClick={() => removeFile(fileObj._id)}
+                            variant={"ghost"}
+                            className="text-red-600"
+                          >
+                            <X />
+                          </Button>
+
+                          <span className="text-nowrap truncate text-sm">
+                            {fileObj.file.name}
+                          </span>
+
+                          {!droppedFiles.filter((e) => e.isLoading).length && (
+                            <>
+                              {droppedFiles.filter((f) => f.refinedVisuraData)
+                                .length &&
+                                !fileObj.refinedVisuraData?.situazioni
+                                  .length && (
+                                  <>
+                                    <TriangleAlert
+                                      size={17}
+                                      className="ml-2 min-w-5"
+                                      fill="yellow"
+                                    />
+                                  </>
+                                )}
+                            </>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={!fileObj.file.arrayBuffer}
+                            onClick={() =>
+                              setModalContent(<PdfModal pdf={fileObj.file} />)
+                            }
+                          >
+                            <Eye />
+                          </Button>
+
+                          <div className="ml-auto flex">
+                            {fileObj.isLoading && (
+                              <>
+                                <Loader size={20} className="animate-spin" />
+                              </>
+                            )}
+                            {!fileObj.isLoading && (
+                              <>
+                                <FileBox
+                                  className={`${
+                                    fileObj.refinedVisuraData?.situazioni.length
+                                      ? ""
+                                      : "text-gray-300"
+                                  }`}
+                                  size={20}
+                                />
+                                <Calculator
+                                  className={`${
+                                    Object.values(fileObj.imuData ?? {}).some(
+                                      (entry) => typeof entry.imu === "number"
+                                    )
+                                      ? ""
+                                      : "text-gray-300"
+                                  }`}
+                                  size={20}
+                                />
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                {!!droppedFiles.find((e) => !!e.imuData) && (
+                  <Button
+                    className="mt-5"
+                    size={"sm"}
+                    variant={"secondary"}
+                    onClick={() => setSelectedFileId("all")}
+                  >
+                    Vedi tutti
+                  </Button>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -540,71 +674,87 @@ export default function App() {
             />
           )}
 
-          {!!droppedFiles.length &&
-            selectedFileId &&
-            !!droppedFiles.find((f) => f._id === selectedFileId) && (
-              <>
-                {droppedFiles.find((f) => f._id === selectedFileId)!
-                  .refinedVisuraData && (
+          {!!droppedFiles.length && selectedFileId ? (
+            <>
+              {!!droppedFiles.find((f) => f._id === selectedFileId) &&
+                droppedFiles.find((f) => f._id === selectedFileId)?.fileType ===
+                  "visura" && (
                   <>
-                    <div className="flex justify-between mb-2 items-center">
-                      <p className="font-semibold">
-                        Numero visura:{" "}
-                        {
-                          droppedFiles.find((f) => f._id === selectedFileId)!
-                            .refinedVisuraData!.numero
-                        }{" "}
-                        / Comune:{" "}
-                        {
-                          droppedFiles.find((f) => f._id === selectedFileId)!
-                            .refinedVisuraData!.comune
-                        }{" "}
-                        (
-                        {
-                          droppedFiles.find((f) => f._id === selectedFileId)!
-                            .refinedVisuraData!.codiceComune
-                        }
-                        )
-                      </p>
-                    </div>
-
-                    <SituazioniTableComponent
-                      onChangeVal={(index, val) => {
-                        const droppedFilesCopy = structuredClone(droppedFiles);
-
-                        droppedFilesCopy.find(
-                          (f) =>
-                            f._id ===
-                            droppedFiles.find((f) => f._id === selectedFileId)!
-                              ._id
-                        )!.refinedVisuraData!.situazioni[index].rendita = val;
-
-                        setDroppedFiles(droppedFilesCopy);
-                        if (aliquote) runCalc(aliquote, droppedFilesCopy);
-                      }}
-                      data={
-                        droppedFiles.find((f) => f._id === selectedFileId)!
-                          .refinedVisuraData!
-                      }
-                    />
-
                     {droppedFiles.find((f) => f._id === selectedFileId)!
-                      .imuData && (
+                      .refinedVisuraData && (
                       <>
-                        <p className="font-semibold mt-4 mb-2">Calcolo IMU</p>
-                        <ImuTableComponent
-                          minYear={minYear}
-                          imuData={
+                        <div className="flex justify-between mb-2 items-center">
+                          <p className="font-semibold">
+                            Numero visura:{" "}
+                            {
+                              droppedFiles.find(
+                                (f) => f._id === selectedFileId
+                              )!.refinedVisuraData!.numero
+                            }{" "}
+                            / Comune:{" "}
+                            {
+                              droppedFiles.find(
+                                (f) => f._id === selectedFileId
+                              )!.refinedVisuraData!.comune
+                            }{" "}
+                            (
+                            {
+                              droppedFiles.find(
+                                (f) => f._id === selectedFileId
+                              )!.refinedVisuraData!.codiceComune
+                            }
+                            )
+                          </p>
+                        </div>
+
+                        <SituazioniTableComponent
+                          onChangeVal={(index, val) => {
+                            const droppedFilesCopy =
+                              structuredClone(droppedFiles);
+
+                            droppedFilesCopy.find(
+                              (f) =>
+                                f._id ===
+                                droppedFiles.find(
+                                  (f) => f._id === selectedFileId
+                                )!._id
+                            )!.refinedVisuraData!.situazioni[index].rendita =
+                              val;
+
+                            setDroppedFiles(droppedFilesCopy);
+                            if (aliquote) runCalc(aliquote, droppedFilesCopy);
+                          }}
+                          data={
                             droppedFiles.find((f) => f._id === selectedFileId)!
-                              .imuData!
+                              .refinedVisuraData!
                           }
                         />
+
+                        {droppedFiles.find((f) => f._id === selectedFileId)!
+                          .imuData && (
+                          <>
+                            <p className="font-semibold mt-4 mb-2">
+                              Calcolo IMU
+                            </p>
+                            <ImuTableComponent
+                              minYear={minYear}
+                              imuData={
+                                droppedFiles.find(
+                                  (f) => f._id === selectedFileId
+                                )!.imuData!
+                              }
+                            />
+                          </>
+                        )}
                       </>
                     )}
                   </>
                 )}
-              </>
-            )}
+              {!!droppedFiles.find((f) => f._id === selectedFileId) &&
+                droppedFiles.find((f) => f._id === selectedFileId)?.fileType ===
+                  "f24" && <>TODO: F24 Page</>}
+            </>
+          ) : null}
         </div>
       </div>
 
