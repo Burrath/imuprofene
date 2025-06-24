@@ -12,6 +12,7 @@ export interface pdfToRawTextDataRes {
   endX: number;
   avgX: number;
   y: number;
+  height: number;
 }
 
 export async function pdfToRawTextData(file: File) {
@@ -45,6 +46,7 @@ export async function pdfToRawTextData(file: File) {
         endX,
         avgX,
         y: invertedY + pageNum * pageHeight,
+        height: item.height, // <-- aggiunta qui
       });
     }
   }

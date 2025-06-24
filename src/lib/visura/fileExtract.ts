@@ -3,8 +3,8 @@ import type { pdfToRawTextDataRes } from "../pdf";
 export enum RAW_FILE_TYPE {
   visura_v1 = "visura_v1",
   visura_v2 = "visura_v2",
-  f24 = "f24",
-  quietanzaf24 = "quietanzaf24",
+  f24_v1 = "f24_v1",
+  f24_v2 = "f24_v2",
 }
 
 export default function getRawFileType(
@@ -17,9 +17,9 @@ export default function getRawFileType(
       return RAW_FILE_TYPE.visura_v1;
     if (data.text.toLowerCase().includes("numero pratica"))
       return RAW_FILE_TYPE.visura_v2;
-    if (data.text.toLowerCase().includes("f24")) return RAW_FILE_TYPE.f24;
+    if (data.text.toLowerCase().includes("f24")) return RAW_FILE_TYPE.f24_v1;
     if (data.text.toLowerCase().includes("estremi del versamento"))
-      return RAW_FILE_TYPE.quietanzaf24;
+      return RAW_FILE_TYPE.f24_v2;
   }
 
   return RAW_FILE_TYPE.visura_v1;

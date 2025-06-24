@@ -348,9 +348,209 @@ function getSituazioniFromRawDataV1(
 function getSituazioniFromRawDataV2(
   rawData: pdfToRawTextDataRes[]
 ): iSituazioneVisura[] {
-  // TODO
+  const situazioni: iSituazioneVisura[] = [];
 
-  return [];
+  const getRelevantSlots = (rawData: pdfToRawTextDataRes[]) => {
+    const recordIndex = rawData.findIndex((e) =>
+      e.text.toLowerCase().includes("dati di classamento")
+    );
+
+    if (recordIndex === -1) return [];
+
+    const reference = rawData[recordIndex];
+    const referenceHeight = reference.height;
+
+    // Cerca il secondo record con stesso height, dopo il primo
+    const secondIndexRelative = rawData
+      .slice(recordIndex + 1)
+      .findIndex((e) => e.height === referenceHeight);
+
+    // Calcola l'indice assoluto
+    const secondIndex =
+      secondIndexRelative !== -1
+        ? recordIndex + 1 + secondIndexRelative
+        : rawData.length;
+
+    // Prendi i record tra i due (escludendo primo e secondo)
+    const sRecords = rawData.slice(recordIndex + 1, secondIndex);
+
+    return sRecords.filter((r) => r.text.trim());
+  };
+
+  const getSituazioniSlots = (situazioni: pdfToRawTextDataRes[]) => {
+    const regex = /^dal\s\d{2}\/\d{2}\/\d{4}/i;
+    const blocks: pdfToRawTextDataRes[][] = [];
+
+    let currentBlock: pdfToRawTextDataRes[] = [];
+    for (let i = 0; i < situazioni.length; i++) {
+      const s = situazioni[i];
+
+      if (regex.test(s.text)) {
+        // se c'è già un blocco in corso, lo chiudo e ne inizio uno nuovo
+        if (currentBlock.length > 0) {
+          blocks.push(currentBlock);
+          currentBlock = [];
+        }
+      }
+
+      currentBlock.push(s);
+    }
+
+    // aggiungi l'ultimo blocco se non vuoto
+    if (currentBlock.length > 0) {
+      blocks.push(currentBlock);
+    }
+
+    return blocks;
+  };
+
+  const relevantSlots = getRelevantSlots(rawData);
+  const situazioniSlots = getSituazioniSlots(relevantSlots);
+
+  situazioniSlots.forEach((sRecords) => {
+    if (!sRecords.length) return;
+
+    const getSituazioneDate = (sRecords: pdfToRawTextDataRes[]) => {
+      if (!sRecords[0]?.text) return;
+
+      // Regex con gruppi per giorno, mese e anno
+      const match = sRecords[0].text.match(/^dal\s(\d{2})\/(\d{2})\/(\d{4})/i);
+      if (!match) return;
+
+      const [, day, month, year] = match;
+
+      // Costruisco la data in formato ISO yyyy-mm-dd (che Date accetta)
+      return new Date(`${year}-${month}-${day}`);
+    };
+
+    const getUnità = (sRecords: pdfToRawTextDataRes[]) => {
+      const unità: iUnitàVisura[] = [];
+
+      const linesY = sRecords
+        .filter((e) => e.text.toLowerCase() === "foglio")
+        .map((e) => e.y);
+
+      linesY.forEach((y) => {
+        const lineRecords = sRecords.filter((e) => e.y === y);
+
+        const foglioIndex = lineRecords.findIndex(
+          (e) => e.text.toLowerCase() === "foglio"
+        );
+        const foglio =
+          foglioIndex !== -1 ? lineRecords[foglioIndex + 1] : undefined;
+
+        const particellaIndex = lineRecords.findIndex(
+          (e) => e.text.toLowerCase() === "particella"
+        );
+        const particella =
+          particellaIndex !== -1 ? lineRecords[particellaIndex + 1] : undefined;
+
+        const subalternoIndex = lineRecords.findIndex(
+          (e) => e.text.toLowerCase() === "subalterno"
+        );
+        const subalterno =
+          subalternoIndex !== -1 ? lineRecords[subalternoIndex + 1] : undefined;
+
+        unità.push({
+          foglio: foglio?.text,
+          particella: particella?.text,
+          sub: subalterno?.text,
+        });
+      });
+
+      return unità;
+    };
+
+    const getCategoria = (sRecords: pdfToRawTextDataRes[]) => {
+      const catLineIndex = sRecords.findIndex(
+        (e) => e.text.toLowerCase() === "categoria"
+      );
+      if (catLineIndex !== -1) {
+        const cat = sRecords[catLineIndex + 1].text;
+        return cat;
+      }
+    };
+
+    const getRendita = (sRecords: pdfToRawTextDataRes[]) => {
+      const renditaLineIndex = sRecords.findIndex(
+        (e) => e.text.toLowerCase() === "rendita:"
+      );
+
+      // TODO verifica come prendere la dominicale
+
+      if (renditaLineIndex !== -1) {
+        const rawText = sRecords[renditaLineIndex + 1]?.text ?? "";
+        const renditaText = rawText
+          .replace("Euro ", "")
+          .replace(/\./g, "") // rimuove tutti i punti
+          .replace(",", ".");
+
+        const value = Number(renditaText);
+        if (isNaN(value)) return undefined;
+        return value;
+      }
+
+      return undefined;
+    };
+
+    const getSituazioneType = (
+      sRecords: pdfToRawTextDataRes[]
+    ): SITUAZIONE_TYPE => {
+      const annotazioniColX = sRecords.find((e) =>
+        e.text.toLowerCase().includes("annotazioni:")
+      )?.startX;
+
+      if (annotazioniColX) {
+        const relevantRecords = sRecords.filter(
+          (e) => e.startX >= annotazioniColX
+        );
+        const text = relevantRecords
+          .map((r) => r.text)
+          .join(" ")
+          .toLowerCase();
+
+        if (text.includes("rendita non rettific"))
+          return SITUAZIONE_TYPE.RenditaNonRettificata;
+
+        if (text.includes("rendita rettific"))
+          return SITUAZIONE_TYPE.RenditaRettificata;
+
+        if (text.includes("rendita propost"))
+          return SITUAZIONE_TYPE.RenditaProposta;
+      }
+
+      return SITUAZIONE_TYPE.RenditaValidata;
+    };
+
+    const getImmobileType = (
+      sRecords: pdfToRawTextDataRes[]
+    ): IMMOBILE_TYPE => {
+
+      // TODO get immobile type
+
+      return IMMOBILE_TYPE.Fabbricato;
+    };
+
+    const date = getSituazioneDate(sRecords);
+    const unità = getUnità(sRecords);
+    const categoria = getCategoria(sRecords);
+    const rendita = getRendita(sRecords);
+    const situazioneType = getSituazioneType(sRecords);
+    const immobileType = getImmobileType(sRecords);
+
+    const record: iSituazioneVisura = {
+      dal: date,
+      unità: unità,
+      categoria: categoria,
+      rendita: rendita,
+      type: situazioneType,
+      immobileType: immobileType,
+    };
+
+    situazioni.push(record);
+  });
+
+  return situazioni;
 }
 
 export function parseRawDataToSituazioniVisura(

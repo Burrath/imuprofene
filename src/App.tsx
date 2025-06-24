@@ -215,8 +215,8 @@ export default function App() {
 
       let f24Data: iF24;
       if (
-        rawFileType === RAW_FILE_TYPE.f24 ||
-        rawFileType === RAW_FILE_TYPE.quietanzaf24
+        rawFileType === RAW_FILE_TYPE.f24_v1 ||
+        rawFileType === RAW_FILE_TYPE.f24_v2
       ) {
         f24Data = parseDataFromF24RawData(rawData);
         fileType = "f24";
@@ -395,6 +395,12 @@ export default function App() {
           <Edit2 />
         </Button>
 
+        {!!droppedFiles.find((e) => !!e.imuData) && (
+          <Button size={"sm"} onClick={() => setSelectedFileId("all")}>
+            Vedi i calcoli agglomerati <Calculator />
+          </Button>
+        )}
+
         <div className="flex ml-auto">
           <Button
             onClick={() => {
@@ -447,7 +453,7 @@ export default function App() {
       </div>
 
       <div className="flex h-full overflow-hidden">
-        <div className="w-xs min-w-xs h-full p-2 border-r overflow-scroll">
+        <div className="w-xs min-w-xs h-full p-2 border-r flex flex-col">
           <div className="flex justify-center mb-2">
             <Button
               size={"sm"}
@@ -459,45 +465,143 @@ export default function App() {
             </Button>
           </div>
 
-          {droppedFiles.length > 0 && (
-            <>
-              <div className="flex flex-col w-full">
-                {!!droppedFiles.filter((f) => f.fileType === "visura")
-                  .length && (
-                  <span className="font-semibold text-sm">Visure</span>
-                )}
-                {droppedFiles
-                  .filter((f) => f.fileType === "visura")
-                  .map((fileObj, key) => (
-                    <div
-                      className={`relative border-b flex flex-col cursor-pointer w-full ${
-                        fileObj._id === selectedFileId
-                          ? "bg-gray-200"
-                          : "hover:bg-gray-100"
-                      }`}
-                      key={key}
-                      onClick={() => setSelectedFileId(fileObj._id)}
-                    >
-                      <div className="flex flex-row gap-3 items-center w-full">
-                        <div className="flex items-center w-full">
-                          <Button
-                            size={"sm"}
-                            onClick={() => removeFile(fileObj._id)}
-                            variant={"ghost"}
-                            className="text-red-600"
-                          >
-                            <X />
-                          </Button>
+          <div className="flex h-full overflow-scroll">
+            {droppedFiles.length > 0 && (
+              <>
+                <div className="flex flex-col w-full">
+                  {!!droppedFiles.filter((f) => f.fileType === "visura")
+                    .length && (
+                    <span className="font-semibold text-sm">Visure</span>
+                  )}
+                  {droppedFiles
+                    .filter((f) => f.fileType === "visura")
+                    .map((fileObj, key) => (
+                      <div
+                        className={`relative border-b flex flex-col cursor-pointer w-full ${
+                          fileObj._id === selectedFileId
+                            ? "bg-gray-200"
+                            : "hover:bg-gray-100"
+                        }`}
+                        key={key}
+                        onClick={() => setSelectedFileId(fileObj._id)}
+                      >
+                        <div className="flex flex-row gap-3 items-center w-full">
+                          <div className="flex items-center w-full">
+                            <Button
+                              size={"sm"}
+                              onClick={() => removeFile(fileObj._id)}
+                              variant={"ghost"}
+                              className="text-red-600"
+                            >
+                              <X />
+                            </Button>
 
-                          <span className="text-nowrap truncate text-sm">
-                            {fileObj.file.name}
-                          </span>
+                            <span className="text-nowrap truncate text-sm">
+                              {fileObj.file.name}
+                            </span>
 
-                          {!droppedFiles.filter((e) => e.isLoading).length && (
-                            <>
-                              {droppedFiles.filter((f) => f.refinedVisuraData)
-                                .length &&
-                                !fileObj.refinedVisuraData?.situazioni
+                            {!droppedFiles.filter((e) => e.isLoading)
+                              .length && (
+                              <>
+                                {droppedFiles.filter((f) => f.refinedVisuraData)
+                                  .length &&
+                                  !fileObj.refinedVisuraData?.situazioni
+                                    .length && (
+                                    <>
+                                      <TriangleAlert
+                                        size={17}
+                                        className="ml-2 min-w-5"
+                                        fill="yellow"
+                                      />
+                                    </>
+                                  )}
+                              </>
+                            )}
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={!fileObj.file.arrayBuffer}
+                              onClick={() =>
+                                setModalContent(<PdfModal pdf={fileObj.file} />)
+                              }
+                            >
+                              <Eye />
+                            </Button>
+
+                            <div className="ml-auto flex">
+                              {fileObj.isLoading && (
+                                <>
+                                  <Loader size={20} className="animate-spin" />
+                                </>
+                              )}
+                              {!fileObj.isLoading && (
+                                <>
+                                  <FileBox
+                                    className={`${
+                                      fileObj.refinedVisuraData?.situazioni
+                                        .length
+                                        ? ""
+                                        : "text-gray-300"
+                                    }`}
+                                    size={20}
+                                  />
+                                  <Calculator
+                                    className={`${
+                                      Object.values(fileObj.imuData ?? {}).some(
+                                        (entry) => typeof entry.imu === "number"
+                                      )
+                                        ? ""
+                                        : "text-gray-300"
+                                    }`}
+                                    size={20}
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+
+                <div className="flex flex-col w-full">
+                  {!!droppedFiles.filter((f) => f.fileType === "f24")
+                    .length && (
+                    <span className="font-semibold text-sm mt-4">F24</span>
+                  )}
+
+                  {droppedFiles
+                    .filter((f) => f.fileType === "f24")
+                    .map((fileObj, key) => (
+                      <div
+                        className={`relative border-b flex flex-col cursor-pointer w-full ${
+                          fileObj._id === selectedFileId
+                            ? "bg-gray-200"
+                            : "hover:bg-gray-100"
+                        }`}
+                        key={key}
+                        onClick={() => setSelectedFileId(fileObj._id)}
+                      >
+                        <div className="flex flex-row gap-3 items-center w-full">
+                          <div className="flex items-center w-full">
+                            <Button
+                              size={"sm"}
+                              onClick={() => removeFile(fileObj._id)}
+                              variant={"ghost"}
+                              className="text-red-600"
+                            >
+                              <X />
+                            </Button>
+
+                            <span className="text-nowrap truncate text-sm">
+                              {fileObj.file.name}
+                            </span>
+
+                            {!droppedFiles.filter((e) => e.isLoading)
+                              .length && (
+                              <>
+                                {!droppedFiles.filter((f) => f.f24Data)
                                   .length && (
                                   <>
                                     <TriangleAlert
@@ -507,159 +611,45 @@ export default function App() {
                                     />
                                   </>
                                 )}
-                            </>
-                          )}
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={!fileObj.file.arrayBuffer}
-                            onClick={() =>
-                              setModalContent(<PdfModal pdf={fileObj.file} />)
-                            }
-                          >
-                            <Eye />
-                          </Button>
-
-                          <div className="ml-auto flex">
-                            {fileObj.isLoading && (
-                              <>
-                                <Loader size={20} className="animate-spin" />
                               </>
                             )}
-                            {!fileObj.isLoading && (
-                              <>
-                                <FileBox
-                                  className={`${
-                                    fileObj.refinedVisuraData?.situazioni.length
-                                      ? ""
-                                      : "text-gray-300"
-                                  }`}
-                                  size={20}
-                                />
-                                <Calculator
-                                  className={`${
-                                    Object.values(fileObj.imuData ?? {}).some(
-                                      (entry) => typeof entry.imu === "number"
-                                    )
-                                      ? ""
-                                      : "text-gray-300"
-                                  }`}
-                                  size={20}
-                                />
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
 
-                {!!droppedFiles.find((e) => !!e.imuData) && (
-                  <Button
-                    className="mt-5"
-                    size={"sm"}
-                    variant={"secondary"}
-                    onClick={() => setSelectedFileId("all")}
-                  >
-                    Vedi tutti
-                  </Button>
-                )}
-              </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={!fileObj.file.arrayBuffer}
+                              onClick={() =>
+                                setModalContent(<PdfModal pdf={fileObj.file} />)
+                              }
+                            >
+                              <Eye />
+                            </Button>
 
-              <div className="flex flex-col w-full">
-                {!!droppedFiles.filter((f) => f.fileType === "f24").length && (
-                  <span className="font-semibold text-sm mt-4">F24</span>
-                )}
-
-                {droppedFiles
-                  .filter((f) => f.fileType === "f24")
-                  .map((fileObj, key) => (
-                    <div
-                      className={`relative border-b flex flex-col cursor-pointer w-full ${
-                        fileObj._id === selectedFileId
-                          ? "bg-gray-200"
-                          : "hover:bg-gray-100"
-                      }`}
-                      key={key}
-                      onClick={() => setSelectedFileId(fileObj._id)}
-                    >
-                      <div className="flex flex-row gap-3 items-center w-full">
-                        <div className="flex items-center w-full">
-                          <Button
-                            size={"sm"}
-                            onClick={() => removeFile(fileObj._id)}
-                            variant={"ghost"}
-                            className="text-red-600"
-                          >
-                            <X />
-                          </Button>
-
-                          <span className="text-nowrap truncate text-sm">
-                            {fileObj.file.name}
-                          </span>
-
-                          {!droppedFiles.filter((e) => e.isLoading).length && (
-                            <>
-                              {!droppedFiles.filter((f) => f.f24Data)
-                                .length && (
+                            <div className="ml-auto flex">
+                              {fileObj.isLoading && (
                                 <>
-                                  <TriangleAlert
-                                    size={17}
-                                    className="ml-2 min-w-5"
-                                    fill="yellow"
+                                  <Loader size={20} className="animate-spin" />
+                                </>
+                              )}
+                              {!fileObj.isLoading && (
+                                <>
+                                  <FileBox
+                                    className={`${
+                                      fileObj.f24Data ? "" : "text-gray-300"
+                                    }`}
+                                    size={20}
                                   />
                                 </>
                               )}
-                            </>
-                          )}
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={!fileObj.file.arrayBuffer}
-                            onClick={() =>
-                              setModalContent(<PdfModal pdf={fileObj.file} />)
-                            }
-                          >
-                            <Eye />
-                          </Button>
-
-                          <div className="ml-auto flex">
-                            {fileObj.isLoading && (
-                              <>
-                                <Loader size={20} className="animate-spin" />
-                              </>
-                            )}
-                            {!fileObj.isLoading && (
-                              <>
-                                <FileBox
-                                  className={`${
-                                    fileObj.f24Data ? "" : "text-gray-300"
-                                  }`}
-                                  size={20}
-                                />
-                              </>
-                            )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-
-                {!!droppedFiles.find((e) => !!e.imuData) && (
-                  <Button
-                    className="mt-5"
-                    size={"sm"}
-                    variant={"secondary"}
-                    onClick={() => setSelectedFileId("all")}
-                  >
-                    Vedi tutti
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
+                    ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col p-4 w-full overflow-scroll">
@@ -681,7 +671,7 @@ export default function App() {
                       .refinedVisuraData && (
                       <>
                         <div className="flex justify-between mb-2 items-center">
-                          <p className="font-semibold">
+                          <p className="font-semibold flex items-center">
                             Numero visura:{" "}
                             {
                               droppedFiles.find(
@@ -701,6 +691,28 @@ export default function App() {
                               )!.refinedVisuraData!.codiceComune
                             }
                             )
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={
+                                !droppedFiles.find(
+                                  (f) => f._id === selectedFileId
+                                )!.file.arrayBuffer
+                              }
+                              onClick={() =>
+                                setModalContent(
+                                  <PdfModal
+                                    pdf={
+                                      droppedFiles.find(
+                                        (f) => f._id === selectedFileId
+                                      )!.file
+                                    }
+                                  />
+                                )
+                              }
+                            >
+                              <Eye />
+                            </Button>
                           </p>
                         </div>
 
