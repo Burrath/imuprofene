@@ -218,7 +218,7 @@ export default function App() {
         rawFileType === RAW_FILE_TYPE.f24_v1 ||
         rawFileType === RAW_FILE_TYPE.f24_v2
       ) {
-        f24Data = parseDataFromF24RawData(rawData);
+        f24Data = parseDataFromF24RawData(rawData, rawFileType);
         fileType = "f24";
       }
 
@@ -465,7 +465,7 @@ export default function App() {
             </Button>
           </div>
 
-          <div className="flex h-full overflow-scroll">
+          <div className="flex flex-col h-full overflow-scroll">
             {droppedFiles.length > 0 && (
               <>
                 <div className="flex flex-col w-full">
