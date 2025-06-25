@@ -769,8 +769,15 @@ export default function App() {
                       {
                         droppedFiles.find((f) => f._id === selectedFileId)!.file
                           .name
-                      }
-
+                      }{" "}
+                      (Data versamento:{" "}
+                      {new Date(
+                        String(
+                          droppedFiles.find((f) => f._id === selectedFileId)
+                            ?.f24Data?.dataVersamento
+                        )
+                      ).toLocaleDateString("it-IT")}
+                      )
                       <Button
                         variant="ghost"
                         size="sm"

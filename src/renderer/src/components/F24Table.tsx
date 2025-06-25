@@ -5,6 +5,21 @@ import { CopyPopover } from "./CopyPopover";
 import { iF24 } from "@renderer/lib/visura/f24Interfaces";
 
 export function F24Table({ f24 }: { f24: iF24 }) {
+  const totalDebito =
+    f24.voci?.reduce((sum, voce) => {
+      return (
+        sum + (typeof voce.importoDebito === "number" ? voce.importoDebito : 0)
+      );
+    }, 0) ?? 0;
+
+  const totalCredito =
+    f24.voci?.reduce((sum, voce) => {
+      return (
+        sum +
+        (typeof voce.importoCredito === "number" ? voce.importoCredito : 0)
+      );
+    }, 0) ?? 0;
+
   return (
     <div className="text-sm">
       <table className="min-w-full border border-gray-300">
@@ -123,14 +138,24 @@ export function F24Table({ f24 }: { f24: iF24 }) {
               </td>
             </tr>
           )}
+
+          {f24.voci?.length ? (
+            <tr className="bg-gray-50 font-bold">
+              <td colSpan={5} className="border px-4 py-2 text-right">
+                Totali:
+              </td>
+              <td className="border px-4 py-2">
+                € {formatNumberIT(totalDebito)}
+                <CopyPopover value={totalDebito.toFixed(2)} />
+              </td>
+              <td className="border px-4 py-2">
+                € {formatNumberIT(totalCredito)}
+                <CopyPopover value={totalCredito.toFixed(2)} />
+              </td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
-      {f24.dataVersamento && (
-        <div className="mt-2 text-right text-sm text-gray-700 italic">
-          Data versamento:{" "}
-          {new Date(f24.dataVersamento).toLocaleDateString("it-IT")}
-        </div>
-      )}
     </div>
   );
 }
