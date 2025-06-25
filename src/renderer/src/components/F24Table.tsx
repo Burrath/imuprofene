@@ -25,22 +25,22 @@ export function F24Table({ f24 }: { f24: iF24 }) {
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border px-4 py-2">Codice Comune</th>
-            <th className="border px-4 py-2">Causale Tributo</th>
-            <th className="border px-4 py-2">Estremi</th>
-            <th className="border px-4 py-2">Periodo</th>
-            <th className="border px-4 py-2">Importo Debito</th>
-            <th className="border px-4 py-2">Importo Credito</th>
+            <th className="border px-2 py-1">Codice Comune</th>
+            <th className="border px-2 py-1">Causale Tributo</th>
+            <th className="border px-2 py-1">Estremi</th>
+            <th className="border px-2 py-1">Periodo</th>
+            <th className="border px-2 py-1">Importo Debito</th>
+            <th className="border px-2 py-1">Importo Credito</th>
           </tr>
         </thead>
         <tbody>
           {f24.voci?.length ? (
             f24.voci.map((voce, idx) => (
               <tr key={idx}>
-                <td className="border px-4 py-2">
+                <td className="border px-2 py-1">
                   {voce.codice || <X className="text-red-500 w-4 h-4" />}
                 </td>
-                <td className="border px-4 py-2">
+                <td className="border px-2 py-1">
                   {voce.causaleTributo || (
                     <X className="text-red-500 w-4 h-4" />
                   )}
@@ -82,11 +82,11 @@ export function F24Table({ f24 }: { f24: iF24 }) {
                   )}
                 </td>
 
-                <td className="border px-4 py-2">
+                <td className="border px-2 py-1">
                   {voce.periodo || <X className="text-red-500 w-4 h-4" />}
                 </td>
                 <td
-                  className={`border px-4 py-2 font-semibold ${
+                  className={`border px-2 py-1 font-semibold ${
                     typeof voce.importoDebito !== "number" ||
                     voce.importoDebito === 0
                       ? "font-light bg-gray-50"
@@ -105,7 +105,7 @@ export function F24Table({ f24 }: { f24: iF24 }) {
                 </td>
 
                 <td
-                  className={`border px-4 py-2 font-semibold ${
+                  className={`border px-2 py-1 font-semibold ${
                     typeof voce.importoCredito !== "number" ||
                     voce.importoCredito === 0
                       ? "font-light bg-gray-50"
@@ -137,14 +137,14 @@ export function F24Table({ f24 }: { f24: iF24 }) {
 
           {f24.voci?.length && f24.voci?.length > 1 ? (
             <tr className="bg-gray-50 font-bold">
-              <td colSpan={5} className="border px-4 py-2 text-right">
+              <td colSpan={5} className="border px-2 py-1 text-right">
                 Totali:
               </td>
-              <td className="border px-4 py-2">
+              <td className="border px-2 py-1">
                 € {formatNumberIT(totalDebito)}
                 <CopyPopover value={totalDebito.toFixed(2)} />
               </td>
-              <td className="border px-4 py-2">
+              <td className="border px-2 py-1">
                 € {formatNumberIT(totalCredito)}
                 <CopyPopover value={totalCredito.toFixed(2)} />
               </td>

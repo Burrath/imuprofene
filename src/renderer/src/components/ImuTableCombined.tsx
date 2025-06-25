@@ -96,11 +96,11 @@ export function ImuTableCombined({
             <table className="w-full border border-gray-300 text-sm">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="border px-4 py-2">File</th>
-                  <th className="border px-4 py-2">Categorie</th>
-                  <th className="border px-4 py-2">IMU Anticipo</th>
-                  <th className="border px-4 py-2">IMU Saldo</th>
-                  <th className="border px-4 py-2">IMU</th>
+                  <th className="border px-2 py-1">File</th>
+                  <th className="border px-2 py-1">Categorie</th>
+                  <th className="border px-2 py-1">IMU Anticipo</th>
+                  <th className="border px-2 py-1">IMU Saldo</th>
+                  <th className="border px-2 py-1">IMU</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,7 +110,7 @@ export function ImuTableCombined({
 
                   return (
                     <tr key={fileObj.file.name}>
-                      <td className="border px-4 py-2">
+                      <td className="border px-2 py-1">
                         {fileObj.file.name}
                         <Button
                           variant="ghost"
@@ -131,28 +131,28 @@ export function ImuTableCombined({
                         </Button>
                       </td>
 
-                      <td className="border px-4 py-2">
+                      <td className="border px-2 py-1">
                         {!imuData.categorie.length ? (
                           <X className="text-red-500 w-4 h-4" />
                         ) : (
                           imuData.categorie.join(" - ")
                         )}
                       </td>
-                      <td className="border px-4 py-2 font-semibold">
+                      <td className="border px-2 py-1 font-semibold">
                         {typeof imuData.imuAnticipo !== "number" ? (
                           <X className="text-red-500 w-4 h-4" />
                         ) : (
                           `€ ${formatNumberIT(imuData.imuAnticipo)}`
                         )}
                       </td>
-                      <td className="border px-4 py-2 font-semibold">
+                      <td className="border px-2 py-1 font-semibold">
                         {typeof imuData.imuSaldo !== "number" ? (
                           <X className="text-red-500 w-4 h-4" />
                         ) : (
                           `€ ${formatNumberIT(imuData.imuSaldo)}`
                         )}
                       </td>
-                      <td className="border px-4 py-2 font-semibold">
+                      <td className="border px-2 py-1 font-semibold">
                         {typeof imuData.imu !== "number" ? (
                           <X className="text-red-500 w-4 h-4" />
                         ) : (
@@ -165,9 +165,9 @@ export function ImuTableCombined({
 
                 {/* Totale per comune */}
                 <tr className="font-bold bg-gray-50">
-                  <td className="border px-4 py-2">Totale</td>
-                  <td className="border px-4 py-2" colSpan={1}></td>
-                  <td className="border px-4 py-2">
+                  <td className="border px-2 py-1">Totale</td>
+                  <td className="border px-2 py-1" colSpan={1}></td>
+                  <td className="border px-2 py-1">
                     €{" "}
                     {formatNumberIT(
                       files.reduce(
@@ -184,7 +184,7 @@ export function ImuTableCombined({
                       )}
                     />
                   </td>
-                  <td className="border px-4 py-2">
+                  <td className="border px-2 py-1">
                     €{" "}
                     {formatNumberIT(
                       files.reduce(
@@ -201,7 +201,7 @@ export function ImuTableCombined({
                       )}
                     />
                   </td>
-                  <td className="border px-4 py-2">
+                  <td className="border px-2 py-1">
                     €{" "}
                     {formatNumberIT(
                       files.reduce(
@@ -232,17 +232,17 @@ export function ImuTableCombined({
                     <table className="w-full border border-gray-300 text-sm">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="border px-4 py-2">File</th>
-                          <th className="border px-4 py-2">Causale Tributo</th>
-                          <th className="border px-4 py-2">Modalità</th>
-                          <th className="border px-4 py-2">Importo</th>
+                          <th className="border px-2 py-1">File</th>
+                          <th className="border px-2 py-1">Causale Tributo</th>
+                          <th className="border px-2 py-1">Modalità</th>
+                          <th className="border px-2 py-1">Importo</th>
                         </tr>
                       </thead>
                       <tbody>
                         {fileObj.f24Data.voci?.map((voce, key) => {
                           return (
                             <tr key={key}>
-                              <td className="border px-4 py-2">
+                              <td className="border px-2 py-1">
                                 {fileObj.file.name}{" "}
                                 <Button
                                   variant="ghost"
@@ -264,14 +264,14 @@ export function ImuTableCombined({
                                   <ArrowUpRight />
                                 </Button>
                               </td>
-                              <td className="border px-4 py-2">
+                              <td className="border px-2 py-1">
                                 {voce.causaleTributo}
                               </td>
-                              <td className="border px-4 py-2">
+                              <td className="border px-2 py-1">
                                 {voce.estremi?.saldo ? "SALDO" : ""}{" "}
                                 {voce.estremi?.acc ? "ACCONTO" : ""}
                               </td>
-                              <td className="border px-4 py-2 font-bold">
+                              <td className="border px-2 py-1 font-bold">
                                 €{" "}
                                 {voce.importoDebito && (
                                   <>

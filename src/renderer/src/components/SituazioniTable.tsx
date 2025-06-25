@@ -42,22 +42,22 @@ export function SituazioniTableComponent({
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border px-4 py-2">Dal</th>
-            <th className="border px-4 py-2">Tipo</th>
-            <th className="border px-4 py-2">Unità</th>
-            <th className="border px-4 py-2">Immobile</th>
-            <th className="border px-4 py-2">Categoria</th>
-            <th className="border px-4 py-2">Rendita - Dominicale - Venale</th>
+            <th className="border px-2 py-1">Dal</th>
+            <th className="border px-2 py-1">Tipo</th>
+            <th className="border px-2 py-1">Unità</th>
+            <th className="border px-2 py-1">Immobile</th>
+            <th className="border px-2 py-1">Categoria</th>
+            <th className="border px-2 py-1">Rendita - Dominicale - Venale</th>
           </tr>
         </thead>
         <tbody>
           {data.situazioni.map((situazione, index) => (
             <tr key={index}>
-              <td className="border px-4 py-2">
+              <td className="border px-2 py-1">
                 {situazione.dal &&
                   new Date(situazione.dal).toLocaleDateString()}
               </td>
-              <td className="border px-4 py-2">{situazione.type}</td>
+              <td className="border px-2 py-1">{situazione.type}</td>
               <td className="border">
                 {situazione.unità && (
                   <table className="text-xs w-full">
@@ -83,9 +83,9 @@ export function SituazioniTableComponent({
                 )}
               </td>
 
-              <td className="border px-4 py-2">{situazione.immobileType}</td>
-              <td className="border px-4 py-2">{situazione.categoria}</td>
-              <td className="border px-4 py-2">
+              <td className="border px-2 py-1">{situazione.immobileType}</td>
+              <td className="border px-2 py-1">{situazione.categoria}</td>
+              <td className="border px-2 py-1">
                 €{" "}
                 {editRow[index] ? (
                   <>
