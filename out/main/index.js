@@ -6,7 +6,10 @@ const utils = require("@electron-toolkit/utils");
 async function pdfToRawTextData(arrayBuffer) {
   const pdfParser = new PDFParser();
   const data = await new Promise((resolve, reject) => {
-    pdfParser.on("pdfParser_dataReady", (pdfData) => resolve(pdfData));
+    pdfParser.on(
+      "pdfParser_dataReady",
+      (pdfData) => resolve(pdfData)
+    );
     pdfParser.on("pdfParser_dataError", (err) => reject(err));
     pdfParser.parseBuffer(Buffer.from(arrayBuffer));
   });
@@ -37,7 +40,13 @@ async function pdfToRawTextData(arrayBuffer) {
       });
     }
   }
-  return result;
+  const orderedRes = result.sort((a, b) => {
+    if (a.y !== b.y) {
+      return a.y - b.y;
+    }
+    return a.startX - b.startX;
+  });
+  return orderedRes;
 }
 const icon = path.join(__dirname, "../../resources/icon.png");
 function createWindow() {
