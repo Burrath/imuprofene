@@ -339,7 +339,7 @@ export default function App() {
         <>
           <div className="absolute rounded inset-0 m-5 flex items-center justify-center border-blue-500 bg-blue-100 border-5 border-dashed pointer-events-none z-50">
             <div className="flex items-center justify-center">
-              <p className="font-semibold text-5xl flex items-center gap-5">
+              <p className="font-semibold text-5xl flex items-center gap-5 text-center">
                 Drop like it's hot <Flame size={50} fill="red" />
               </p>
             </div>

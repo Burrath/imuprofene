@@ -40,10 +40,10 @@ export function F24Table({ f24 }: { f24: iF24 }) {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="border px-1 py-1">Ravv</th>
-                          <th className="border px-1 py-1">Var.</th>
+                          <th className="border px-1 py-1">Var</th>
                           <th className="border px-1 py-1">Acc</th>
                           <th className="border px-1 py-1">Sal</th>
-                          <th className="border px-1 py-1"># Imm.</th>
+                          <th className="border px-1 py-1"># Imm</th>
                         </tr>
                       </thead>
                       <tbody>
