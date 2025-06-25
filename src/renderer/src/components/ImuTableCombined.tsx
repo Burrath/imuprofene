@@ -4,6 +4,7 @@ import { formatNumberIT } from "../lib/utils";
 import type { DroppedFile } from "../App";
 import { CopyPopover } from "./CopyPopover";
 import { Button } from "./ui/button";
+import { useEffect, useState } from "react";
 
 export function ImuTableCombined({
   droppedFiles,
@@ -16,19 +17,80 @@ export function ImuTableCombined({
 }) {
   const currentYear = new Date().getFullYear();
   const years = Array.from(
-    { length: currentYear - 1970 + 1 },
-    (_, i) => 1970 + i
+    { length: currentYear - 1990 + 1 },
+    (_, i) => 1990 + i
   ).reverse();
+
+  const [visuraFiles, setVisuraFiles] = useState<DroppedFile[]>([]);
+  const [f24Files, setF24files] = useState<DroppedFile[]>([]);
+  const [year, setYear] = useState<number>(currentYear);
+
+  useEffect(() => {
+    setVisuraFiles(droppedFiles.filter((f) => f.fileType === "visura"));
+    setF24files(droppedFiles.filter((f) => f.fileType === "f24"));
+  }, [droppedFiles]);
+
+  const getF24FromComuneAndPeriod = (codiceComune: string, year: string) => {
+    const res = f24Files.filter(
+      (e) =>
+        e.f24Data?.voci?.find((v) => v.codice === codiceComune) &&
+        e.f24Data?.voci?.find((v) => v.periodo?.includes(year))
+    );
+
+    return res;
+  };
+
+  const getVisureGroupedByComune = (files: DroppedFile[]) => {
+    const groupedByComune = files.reduce(
+      (acc, file) => {
+        const codiceComune =
+          file.refinedVisuraData?.codiceComune || "Comune sconosciuto";
+        if (!acc[codiceComune]) acc[codiceComune] = [];
+        acc[codiceComune].push(file);
+        return acc;
+      },
+      {} as Record<string, DroppedFile[]>
+    );
+
+    return groupedByComune;
+  };
+
+  // Filtra solo i file che hanno dati per quell'anno
+  const filesForYear = visuraFiles.filter((file) => file.imuData?.[year]);
+  const groupedByComune = getVisureGroupedByComune(filesForYear);
 
   return (
     <div className="text-sm w-full">
-      {years.map((year) => {
-        if (minYear && year < minYear) return <></>;
+      <div className="flex gap-3">
+        {years.map((y) => {
+          if (minYear && y < minYear) return null;
 
-        return (
-          <div className="mb-4" key={year}>
-            <p className="font-semibold text-lg mb-1">{year}</p>
-            <table className="w-full border border-gray-300">
+          return (
+            <Button
+              size={"sm"}
+              variant={year === y ? "default" : "outline"}
+              disabled={y === year}
+              onClick={() => setYear(y)}
+              className={`${year === y ? "font-bold" : "font-light text-gray-600"}`}
+            >
+              {y}
+            </Button>
+          );
+        })}
+      </div>
+
+      <br />
+      <br />
+
+      <div className="mb-8" key={year}>
+        <p className="font-bold text-xl mb-3">{year}</p>
+
+        {Object.entries(groupedByComune).map(([codiceComune, files]) => (
+          <div key={codiceComune} className="mb-6">
+            <p className="font-semibold text-md mb-1">
+              {files[0].refinedVisuraData?.comune} ({codiceComune})
+            </p>
+            <table className="w-full border border-gray-300 text-sm">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="border px-4 py-2">File</th>
@@ -39,15 +101,14 @@ export function ImuTableCombined({
                 </tr>
               </thead>
               <tbody>
-                {droppedFiles.map((fileObj) => {
-                  if (minYear && year < minYear) return <></>;
+                {files.map((fileObj) => {
                   const imuData = fileObj.imuData?.[year];
-                  if (!imuData) return <></>;
+                  if (!imuData) return null;
 
                   return (
                     <tr key={fileObj.file.name}>
                       <td className="border px-4 py-2">
-                        {fileObj.file.name}{" "}
+                        {fileObj.file.name}
                         <Button
                           variant={"ghost"}
                           size={"sm"}
@@ -56,6 +117,7 @@ export function ImuTableCombined({
                           <ArrowUpRight />
                         </Button>
                       </td>
+
                       <td className="border px-4 py-2">
                         {!imuData.categorie.length ? (
                           <X className="text-red-500 w-4 h-4" />
@@ -69,7 +131,6 @@ export function ImuTableCombined({
                         ) : (
                           `€ ${formatNumberIT(imuData.imuAnticipo)}`
                         )}
-                        {/* ...Popover */}
                       </td>
                       <td className="border px-4 py-2 font-semibold">
                         {typeof imuData.imuSaldo !== "number" ? (
@@ -77,7 +138,6 @@ export function ImuTableCombined({
                         ) : (
                           `€ ${formatNumberIT(imuData.imuSaldo)}`
                         )}
-                        {/* ...Popover */}
                       </td>
                       <td className="border px-4 py-2 font-semibold">
                         {typeof imuData.imu !== "number" ? (
@@ -85,67 +145,125 @@ export function ImuTableCombined({
                         ) : (
                           `€ ${formatNumberIT(imuData.imu)}`
                         )}
-                        {/* ...Popover */}
                       </td>
                     </tr>
                   );
                 })}
 
-                {/* Totals row */}
-                <tr className="font-bold">
+                {/* Totale per comune */}
+                <tr className="font-bold bg-gray-50">
                   <td className="border px-4 py-2">Totale</td>
-                  <td className="border px-4 py-2"></td>
+                  <td className="border px-4 py-2" colSpan={1}></td>
                   <td className="border px-4 py-2">
                     €{" "}
                     {formatNumberIT(
-                      droppedFiles.reduce((sum, fileObj) => {
-                        const value = fileObj.imuData?.[year]?.imuAnticipo ?? 0;
-                        return sum + (value > 0 ? value : 0);
-                      }, 0)
+                      files.reduce(
+                        (sum, file) =>
+                          sum + (file.imuData?.[year]?.imuAnticipo ?? 0),
+                        0
+                      )
                     )}
                     <CopyPopover
-                      value={droppedFiles.reduce((sum, fileObj) => {
-                        const value = fileObj.imuData?.[year]?.imuAnticipo ?? 0;
-                        return sum + (value > 0 ? value : 0);
-                      }, 0)}
+                      value={files.reduce(
+                        (sum, file) =>
+                          sum + (file.imuData?.[year]?.imuAnticipo ?? 0),
+                        0
+                      )}
                     />
                   </td>
                   <td className="border px-4 py-2">
                     €{" "}
                     {formatNumberIT(
-                      droppedFiles.reduce((sum, fileObj) => {
-                        const value = fileObj.imuData?.[year]?.imuSaldo ?? 0;
-                        return sum + (value > 0 ? value : 0);
-                      }, 0)
+                      files.reduce(
+                        (sum, file) =>
+                          sum + (file.imuData?.[year]?.imuSaldo ?? 0),
+                        0
+                      )
                     )}
                     <CopyPopover
-                      value={droppedFiles.reduce((sum, fileObj) => {
-                        const value = fileObj.imuData?.[year]?.imuSaldo ?? 0;
-                        return sum + (value > 0 ? value : 0);
-                      }, 0)}
+                      value={files.reduce(
+                        (sum, file) =>
+                          sum + (file.imuData?.[year]?.imuSaldo ?? 0),
+                        0
+                      )}
                     />
                   </td>
                   <td className="border px-4 py-2">
                     €{" "}
                     {formatNumberIT(
-                      droppedFiles.reduce((sum, fileObj) => {
-                        const value = fileObj.imuData?.[year]?.imu ?? 0;
-                        return sum + (value > 0 ? value : 0);
-                      }, 0)
+                      files.reduce(
+                        (sum, file) => sum + (file.imuData?.[year]?.imu ?? 0),
+                        0
+                      )
                     )}
                     <CopyPopover
-                      value={droppedFiles.reduce((sum, fileObj) => {
-                        const value = fileObj.imuData?.[year]?.imu ?? 0;
-                        return sum + (value > 0 ? value : 0);
-                      }, 0)}
+                      value={files.reduce(
+                        (sum, file) => sum + (file.imuData?.[year]?.imu ?? 0),
+                        0
+                      )}
                     />
                   </td>
                 </tr>
               </tbody>
             </table>
+            <br />
+            <p className="font-semibold text-md mb-1">F24 Associati</p>
+
+            {getF24FromComuneAndPeriod(codiceComune, year.toString()).map(
+              (f24File, key) => (
+                <div key={key} className="w-full mb-2">
+                  {f24File.f24Data && (
+                    <table className="w-full border border-gray-300 text-sm">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="border px-4 py-2">File</th>
+                          <th className="border px-4 py-2">Causale Tributo</th>
+                          <th className="border px-4 py-2">Modalità</th>
+                          <th className="border px-4 py-2">Importo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {f24File.f24Data.voci?.map((voce, key) => {
+                          return (
+                            <tr key={key}>
+                              <td className="border px-4 py-2">
+                                {f24File.file.name}{" "}
+                                <Button
+                                  variant={"ghost"}
+                                  size={"sm"}
+                                  onClick={() => onSelect(f24File._id)}
+                                >
+                                  <ArrowUpRight />
+                                </Button>
+                              </td>
+                              <td className="border px-4 py-2">
+                                {voce.causaleTributo}
+                              </td>
+                              <td className="border px-4 py-2">
+                                {voce.estremi?.saldo ? "SALDO" : ""}{" "}
+                                {voce.estremi?.acc ? "ACCONTO" : ""}
+                              </td>
+                              <td className="border px-4 py-2 font-bold">
+                                €{" "}
+                                {voce.importoDebito && (
+                                  <>
+                                    {formatNumberIT(voce.importoDebito)}
+                                    <CopyPopover value={voce.importoDebito} />
+                                  </>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )
+            )}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }

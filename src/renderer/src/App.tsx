@@ -70,8 +70,8 @@ export default function App() {
 
   const currentYear = new Date().getFullYear();
   const years = Array.from(
-    { length: currentYear - 1970 + 1 },
-    (_, i) => 1970 + i
+    { length: currentYear - 1990 + 1 },
+    (_, i) => 1990 + i
   ).reverse();
 
   const save = () => {
@@ -259,7 +259,7 @@ export default function App() {
 
   const runCalc = (aliquote: iAliquoteComune, droppedFiles: DroppedFile[]) => {
     // Step 2: process files one by one
-    for (const file of droppedFiles) {
+    for (const file of droppedFiles.filter((f) => f.fileType === "visura")) {
       if (!file.refinedVisuraData) return;
 
       const imuData = calculateImu(file.refinedVisuraData, aliquote);
@@ -355,12 +355,12 @@ export default function App() {
           value={minYear?.toString()}
         >
           <SelectTrigger className="cursor-pointer">
-            {minYear && (
+            {/* {minYear && (
               <>
                 <span className="font-light">Dal</span>{" "}
                 <span className="font-semibold">{minYear}</span>
               </>
-            )}
+            )} */}
             <SelectValue placeholder={"Filtra per anno"} />
           </SelectTrigger>
           <SelectContent>
