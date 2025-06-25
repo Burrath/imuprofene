@@ -261,7 +261,7 @@ export default function App() {
   const runCalc = (aliquote: iAliquoteComune, droppedFiles: DroppedFile[]) => {
     // Step 2: process files one by one
     for (const file of droppedFiles.filter((f) => f.fileType === "visura")) {
-      if (!file.refinedVisuraData) return;
+      if (!file.refinedVisuraData) continue;
 
       const imuData = calculateImu(file.refinedVisuraData, aliquote);
 
@@ -400,12 +400,6 @@ export default function App() {
           <Edit2 />
         </Button>
 
-        {!!droppedFiles.find((e) => !!e.imuData) && (
-          <Button size={"sm"} onClick={() => setSelectedFileId("all")}>
-            Vedi i calcoli agglomerati <Calculator />
-          </Button>
-        )}
-
         <div className="flex ml-auto">
           <Button
             onClick={() => {
@@ -459,7 +453,13 @@ export default function App() {
 
       <div className="flex h-full overflow-hidden">
         <div className="w-xs min-w-xs h-full p-2 border-r flex flex-col">
-          <div className="flex justify-center mb-2">
+          <div className="flex flex-col justify-center mb-2 gap-3">
+            {!!droppedFiles.find((e) => !!e.imuData) && (
+              <Button size={"sm"} onClick={() => setSelectedFileId("all")}>
+                Vedi i calcoli agglomerati <Calculator />
+              </Button>
+            )}
+
             <Button
               size={"sm"}
               variant={"outline"}
