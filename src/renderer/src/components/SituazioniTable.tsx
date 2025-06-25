@@ -44,7 +44,7 @@ export function SituazioniTableComponent({
           <tr>
             <th className="border px-4 py-2">Dal</th>
             <th className="border px-4 py-2">Tipo</th>
-            <th className="border px-4 py-2">Unità (foglio-particella-sub)</th>
+            <th className="border px-4 py-2">Unità</th>
             <th className="border px-4 py-2">Immobile</th>
             <th className="border px-4 py-2">Categoria</th>
             <th className="border px-4 py-2">Rendita - Dominicale - Venale</th>
@@ -58,19 +58,31 @@ export function SituazioniTableComponent({
                   new Date(situazione.dal).toLocaleDateString()}
               </td>
               <td className="border px-4 py-2">{situazione.type}</td>
-              <td className="border px-4 py-2">
+              <td className="border">
                 {situazione.unità && (
-                  <div className="flex flex-col">
-                    {situazione.unità.map((u, key) => {
-                      return (
-                        <span key={key}>
-                          {u.foglio ?? ""}-{u.particella ?? ""}-{u.sub ?? ""}
-                        </span>
-                      );
-                    })}
-                  </div>
+                  <table className="text-xs w-full">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="border px-1 py-1">Foglio</th>
+                        <th className="border px-1 py-1">Particella</th>
+                        <th className="border px-1 py-1">Sub</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {situazione.unità.map((u, key) => (
+                        <tr key={key}>
+                          <td className="border px-1 py-1">{u.foglio ?? ""}</td>
+                          <td className="border px-1 py-1">
+                            {u.particella ?? ""}
+                          </td>
+                          <td className="border px-1 py-1">{u.sub ?? ""}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </td>
+
               <td className="border px-4 py-2">{situazione.immobileType}</td>
               <td className="border px-4 py-2">{situazione.categoria}</td>
               <td className="border px-4 py-2">

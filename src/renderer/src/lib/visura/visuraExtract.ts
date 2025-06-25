@@ -230,7 +230,7 @@ function getSituazioniFromRawDataV1(
           renditaRecord.text
             .toLowerCase()
             .replace("euro ", "")
-            .replace(".", "")
+            .replace(/\./g, "") // rimuove tutti i punti
             .replace(",", ".")
         );
 
@@ -333,11 +333,8 @@ function getSituazioniFromRawDataV1(
     };
 
     if (
-      situa.dal ||
-      situa.categoria ||
-      situa.rendita ||
-      situa.type ||
-      situa.unità?.length
+      situa.dal &&
+      (situa.categoria || situa.rendita || situa.type || situa.unità?.length)
     )
       situazioni.push(situa);
   });
@@ -472,30 +469,27 @@ function getSituazioniFromRawDataV2(
     };
 
     const getRendita = (sRecords: pdfToRawTextDataRes[]) => {
-      const renditaLineIndex = sRecords.findIndex(
-        (e) => e.text.toLowerCase().trim() === "rendita:"
+      const renditaRecord = sRecords.find((record) =>
+        record.text.toLowerCase().includes("euro")
       );
 
-      // TODO verifica come prendere la dominicale
+      if (renditaRecord) {
+        const rendita = parseFloat(
+          renditaRecord.text
+            .toLowerCase()
+            .replace("euro ", "")
+            .replace(/\./g, "") // rimuove tutti i punti
+            .replace(",", ".")
+        );
 
-      if (renditaLineIndex !== -1) {
-        const rawText = sRecords[renditaLineIndex + 1]?.text ?? "";
-        const renditaText = rawText
-          .replace("Euro ", "")
-          .replace(/\./g, "") // rimuove tutti i punti
-          .replace(",", ".");
-
-        const value = Number(renditaText);
-        if (isNaN(value)) return undefined;
-        return value;
+        return isNaN(rendita) ? 0 : rendita;
       }
-
-      return undefined;
+      return 0;
     };
 
     const getSituazioneType = (
       sRecords: pdfToRawTextDataRes[]
-    ): SITUAZIONE_TYPE => {
+    ): SITUAZIONE_TYPE | undefined => {
       const annotazioniColX = sRecords.find((e) =>
         e.text.toLowerCase().includes("annotazioni:")
       )?.startX;
@@ -517,15 +511,17 @@ function getSituazioniFromRawDataV2(
 
         if (text.includes("rendita propost"))
           return SITUAZIONE_TYPE.RenditaProposta;
-      }
 
-      return SITUAZIONE_TYPE.RenditaValidata;
+        if (text.includes("rendita valida"))
+          return SITUAZIONE_TYPE.RenditaValidata;
+      }
     };
 
     const getImmobileType = (
-      sRecords: pdfToRawTextDataRes[]
+      sRecords: pdfToRawTextDataRes[],
+      categoria?: string
     ): IMMOBILE_TYPE => {
-      // TODO get immobile type
+      if (categoria) return IMMOBILE_TYPE.Fabbricato;
 
       for (let i = 0; i < sRecords.length; i++) {
         const record = sRecords[i];
@@ -534,15 +530,15 @@ function getSituazioniFromRawDataV2(
           return IMMOBILE_TYPE.TerrenoAgricolo;
       }
 
-      return IMMOBILE_TYPE.Fabbricato;
+      return IMMOBILE_TYPE.TerrenoEdificabile;
     };
 
     const date = getSituazioneDate(sRecords);
     const unità = getUnità(sRecords);
     const categoria = getCategoria(sRecords);
-    const rendita = getRendita(sRecords);
     const situazioneType = getSituazioneType(sRecords);
-    const immobileType = getImmobileType(sRecords);
+    const immobileType = getImmobileType(sRecords, categoria);
+    const rendita = getRendita(sRecords);
 
     const situa: iSituazioneVisura = {
       dal: date,
@@ -554,11 +550,8 @@ function getSituazioniFromRawDataV2(
     };
 
     if (
-      situa.dal ||
-      situa.categoria ||
-      situa.rendita ||
-      situa.type ||
-      situa.unità?.length
+      situa.dal &&
+      (situa.categoria || situa.rendita || situa.type || situa.unità?.length)
     )
       situazioni.push(situa);
   });
