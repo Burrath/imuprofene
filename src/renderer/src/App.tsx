@@ -81,6 +81,7 @@ export default function App() {
           _id: e._id,
           refinedVisuraData: e.refinedVisuraData,
           imuData: e.imuData,
+          f24Data: e.f24Data,
           isLoading: false,
           fileType: e.fileType,
           rawFileType: e.rawFileType,
@@ -660,6 +661,7 @@ export default function App() {
               onSelect={(fileId) => setSelectedFileId(fileId)}
               droppedFiles={droppedFiles}
               minYear={minYear}
+              setModalContent={setModalContent}
             />
           )}
 

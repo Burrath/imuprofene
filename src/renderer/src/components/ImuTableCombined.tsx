@@ -1,19 +1,22 @@
-import { ArrowUpRight, X } from "lucide-react";
+import { ArrowUpRight, Eye, X } from "lucide-react";
 import { formatNumberIT } from "../lib/utils";
 
 import type { DroppedFile } from "../App";
 import { CopyPopover } from "./CopyPopover";
 import { Button } from "./ui/button";
-import { useEffect, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
+import { PdfModal } from "./PdfModal";
 
 export function ImuTableCombined({
   droppedFiles,
   minYear,
   onSelect,
+  setModalContent,
 }: {
   droppedFiles: DroppedFile[];
   minYear?: number;
   onSelect: (fileId: string) => void;
+  setModalContent: (el: ReactElement) => void;
 }) {
   const currentYear = new Date().getFullYear();
   const years = Array.from(
@@ -109,6 +112,16 @@ export function ImuTableCombined({
                     <tr key={fileObj.file.name}>
                       <td className="border px-4 py-2">
                         {fileObj.file.name}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={!fileObj.file.arrayBuffer}
+                          onClick={() =>
+                            setModalContent(<PdfModal pdf={fileObj.file} />)
+                          }
+                        >
+                          <Eye />
+                        </Button>
                         <Button
                           variant={"ghost"}
                           size={"sm"}
@@ -209,10 +222,13 @@ export function ImuTableCombined({
             <br />
             <p className="font-semibold text-md mb-1">F24 Associati</p>
 
+            {!getF24FromComuneAndPeriod(codiceComune, year.toString())
+              .length && <p>Non ci sono F24 associati</p>}
+
             {getF24FromComuneAndPeriod(codiceComune, year.toString()).map(
-              (f24File, key) => (
+              (fileObj, key) => (
                 <div key={key} className="w-full mb-2">
-                  {f24File.f24Data && (
+                  {fileObj.f24Data && (
                     <table className="w-full border border-gray-300 text-sm">
                       <thead className="bg-gray-100">
                         <tr>
@@ -223,15 +239,27 @@ export function ImuTableCombined({
                         </tr>
                       </thead>
                       <tbody>
-                        {f24File.f24Data.voci?.map((voce, key) => {
+                        {fileObj.f24Data.voci?.map((voce, key) => {
                           return (
                             <tr key={key}>
                               <td className="border px-4 py-2">
-                                {f24File.file.name}{" "}
+                                {fileObj.file.name}{" "}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={!fileObj.file.arrayBuffer}
+                                  onClick={() =>
+                                    setModalContent(
+                                      <PdfModal pdf={fileObj.file} />
+                                    )
+                                  }
+                                >
+                                  <Eye />
+                                </Button>
                                 <Button
                                   variant={"ghost"}
                                   size={"sm"}
-                                  onClick={() => onSelect(f24File._id)}
+                                  onClick={() => onSelect(fileObj._id)}
                                 >
                                   <ArrowUpRight />
                                 </Button>
