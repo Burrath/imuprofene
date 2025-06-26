@@ -184,10 +184,10 @@ export function ImuTableCombined({
                                 Tipo
                               </th>
                               <th className="px-2 py-1 font-medium border">
-                                F24
+                                Visura
                               </th>
                               <th className="px-2 py-1 font-medium border">
-                                Visura
+                                F24
                               </th>
                               <th className="px-2 py-1 font-medium border"></th>
                             </tr>
@@ -211,10 +211,10 @@ export function ImuTableCombined({
                                     {tipo}
                                   </td>
                                   <td className="px-2 py-1 text-gray-600 border text-nowrap">
-                                    € {formatNumberIT(f24)}
+                                    € {formatNumberIT(visura)}
                                   </td>
                                   <td className="px-2 py-1 text-gray-600 border text-nowrap">
-                                    € {formatNumberIT(visura)}
+                                    € {formatNumberIT(f24)}
                                   </td>
                                   <td className="px-2 py-1 border text-nowrap">
                                     {getStatusIcon(visura, f24)}

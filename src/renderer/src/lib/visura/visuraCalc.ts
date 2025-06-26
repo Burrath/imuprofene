@@ -143,7 +143,7 @@ export function getImuCalculation(
     const imu = baseImponibile * aliquota;
 
     return {
-      imu: Math.round(imu * 100) / 100,
+      imu: imu,
       tipo: "Immobile",
       categoria: normalizedCategoria,
       coefficente: coeff,
