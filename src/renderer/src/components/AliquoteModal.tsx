@@ -50,7 +50,7 @@ export function AliquoteModal({
                       onClick={() => {
                         const aliquoteCopy = structuredClone(aliquote);
 
-                        delete aliquoteCopy[codiceComune][year];
+                        delete aliquoteCopy[codiceComune].years[year];
                         setAliquote(aliquoteCopy);
                       }}
                       className="text-red-600"
