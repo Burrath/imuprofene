@@ -261,6 +261,8 @@ export default function App() {
   }, [droppedFiles.length]);
 
   const runCalc = (aliquote: iAliquoteComune, droppedFiles: DroppedFile[]) => {
+    if (!selectedFileId) setSelectedFileId("all");
+
     // Step 2: process files one by one
     for (const file of droppedFiles.filter((f) => f.fileType === "visura")) {
       if (!file.refinedVisuraData) continue;
@@ -368,16 +370,20 @@ export default function App() {
             <SelectValue placeholder={"Dal ..."} />
           </SelectTrigger>
           <SelectContent>
-            {years.map((year) => (
-              <SelectItem
-                className="cursor-pointer hover:bg-gray-100 p-1 text-sm"
-                key={year}
-                value={year.toString()}
-              >
-                <span className="font-light">Dal</span>{" "}
-                <span className="font-semibold">{year}</span>
-              </SelectItem>
-            ))}
+            {years.map((year) => {
+              if (maxYear && year > maxYear) return null;
+
+              return (
+                <SelectItem
+                  className="cursor-pointer hover:bg-gray-100 p-1 text-sm"
+                  key={year}
+                  value={year.toString()}
+                >
+                  <span className="font-light">Dal</span>{" "}
+                  <span className="font-semibold">{year}</span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
         <Select
@@ -388,16 +394,20 @@ export default function App() {
             <SelectValue placeholder={"Al ..."} />
           </SelectTrigger>
           <SelectContent>
-            {years.map((year) => (
-              <SelectItem
-                className="cursor-pointer hover:bg-gray-100 p-1 text-sm"
-                key={year}
-                value={year.toString()}
-              >
-                <span className="font-light">Al</span>{" "}
-                <span className="font-semibold">{year}</span>
-              </SelectItem>
-            ))}
+            {years.map((year) => {
+              if (minYear && year < minYear) return null;
+
+              return (
+                <SelectItem
+                  className="cursor-pointer hover:bg-gray-100 p-1 text-sm"
+                  key={year}
+                  value={year.toString()}
+                >
+                  <span className="font-light">Al</span>{" "}
+                  <span className="font-semibold">{year}</span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
 
