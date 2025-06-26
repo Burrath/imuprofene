@@ -285,17 +285,17 @@ export default function App() {
   const presetAliquote = (): iAliquoteComune => {
     const aliquote: iAliquoteComune = {};
 
-    const comuni = droppedFiles
-      .map((fileObj) => fileObj.refinedVisuraData?.comune)
+    const codiciComune = droppedFiles
+      .map((fileObj) => fileObj.refinedVisuraData?.codiceComune)
       .filter((e) => e);
 
-    const comuniUnique = [...new Set(comuni)];
+    const codiciComuneUnique = [...new Set(codiciComune)];
 
-    comuniUnique.forEach((comune) => {
-      if (!comune) return;
+    codiciComuneUnique.forEach((codiceComune) => {
+      if (!codiceComune) return;
 
       const situazioni = droppedFiles
-        .filter((f) => f.refinedVisuraData?.comune === comune)
+        .filter((f) => f.refinedVisuraData?.codiceComune === codiceComune)
         .flatMap((f) => f.refinedVisuraData?.situazioni ?? []);
 
       const years = situazioni
@@ -312,17 +312,24 @@ export default function App() {
       const categorie = situazioni.map((s) => s.categoria).filter((e) => e);
       const categorieUnique = [...new Set(categorie)];
 
-      aliquote[comune] = {};
+      const comune = droppedFiles.find(
+        (e) => e.refinedVisuraData?.codiceComune === codiceComune
+      )?.refinedVisuraData?.comune;
+
+      aliquote[codiceComune] = {
+        comune: String(comune),
+        years: {},
+      };
 
       allYears.forEach((year) => {
         if (!year) return;
 
-        aliquote[comune][year] = {};
+        aliquote[codiceComune].years[year] = {};
 
         categorieUnique.forEach((category) => {
           if (!category) return;
 
-          aliquote[comune][year][category] = undefined;
+          aliquote[codiceComune].years[year][category] = undefined;
         });
       });
     });

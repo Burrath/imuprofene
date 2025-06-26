@@ -34,9 +34,13 @@ export interface iVisura {
 }
 
 export interface iAliquoteComune {
-  [comune: string]: {
-    [year: string]: {
-      [categoria: string]: number | undefined;
+  [codiceComune: string]: {
+    comune: any; // string
+
+    years: {
+      [year: string]: {
+        [categoria: string]: number | undefined;
+      };
     };
   };
 }

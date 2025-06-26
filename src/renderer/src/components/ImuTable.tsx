@@ -34,8 +34,8 @@ export function ImuTableComponent({
         </thead>
         <tbody>
           {sortedYears.map((year) => {
-            if (minYear && year < minYear) return <></>;
-            if (maxYear && year > maxYear) return <></>;
+            if (minYear && year < minYear) return null;
+            if (maxYear && year > maxYear) return null;
 
             return (
               <tr key={year}>

@@ -9,7 +9,7 @@ export function Modal({
   content?: ReactElement;
   onClose: () => void;
 }) {
-  if (!content) return <></>;
+  if (!content) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex flex-col items-center justify-center h-screen w-screen p-5">

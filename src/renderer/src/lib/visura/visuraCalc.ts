@@ -193,7 +193,8 @@ export function calculateImu(
 
       if (!relevantSitua || !relevantSitua.categoria) continue;
 
-      const aliquota = aliquote[visura.comune][year][relevantSitua.categoria];
+      const aliquota =
+        aliquote[visura.codiceComune].years[year][relevantSitua.categoria];
 
       if (!aliquota) continue;
 

@@ -16,24 +16,28 @@ export function AliquoteModal({
 }) {
   const [aliquote, setAliquote] = useState<iAliquoteComune>(_aliquote);
 
-  const comuni = Object.keys(aliquote).sort();
+  const codiciComune = Object.keys(aliquote).sort();
 
   return (
     <div className="space-y-4 p-4">
-      {comuni.map((comune, comuneIndex) => {
-        const years = Object.keys(aliquote[comune]).sort(
+      {codiciComune.map((codiceComune, comuneIndex) => {
+        const years = Object.keys(aliquote[codiceComune].years).sort(
           (a, b) => Number(b) - Number(a)
         );
 
         return (
           <div key={comuneIndex} className="p-4 bg-gray">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">{comune}</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              {aliquote[codiceComune].comune} ({codiceComune})
+            </h2>
 
             {years.map((year, yearIndex) => {
-              if (minYear && Number(year) < minYear) return <></>;
-              if (maxYear && Number(year) > maxYear) return <></>;
+              if (minYear && Number(year) < minYear) return null;
+              if (maxYear && Number(year) > maxYear) return null;
 
-              const categorie = Object.keys(aliquote[comune][year]).sort();
+              const categorie = Object.keys(
+                aliquote[codiceComune].years[year]
+              ).sort();
 
               return (
                 <div
@@ -46,7 +50,7 @@ export function AliquoteModal({
                       onClick={() => {
                         const aliquoteCopy = structuredClone(aliquote);
 
-                        delete aliquoteCopy[comune][year];
+                        delete aliquoteCopy[codiceComune][year];
                         setAliquote(aliquoteCopy);
                       }}
                       className="text-red-600"
@@ -75,16 +79,17 @@ export function AliquoteModal({
                           min="0"
                           className="w-full border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-800 bg-slate-100"
                           value={
-                            typeof aliquote[comune][year][categoria] ===
-                            "number"
-                              ? aliquote[comune][year][categoria]
+                            typeof aliquote[codiceComune].years[year][
+                              categoria
+                            ] === "number"
+                              ? aliquote[codiceComune].years[year][categoria]
                               : ""
                           }
                           onChange={(e) => {
                             const val = e.target.value;
                             const aliquoteCopy = structuredClone(aliquote);
 
-                            aliquoteCopy[comune][year][categoria] =
+                            aliquoteCopy[codiceComune].years[year][categoria] =
                               val === "" ? "" : (parseFloat(val) as any);
 
                             setAliquote(aliquoteCopy);
