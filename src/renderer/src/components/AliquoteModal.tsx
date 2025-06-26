@@ -26,7 +26,7 @@ export function AliquoteModal({
         );
 
         return (
-          <div key={comuneIndex} className="p-4 bg-gray">
+          <div key={comuneIndex} className="p-4 bg-gray border shadow">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               {aliquote[codiceComune].comune} ({codiceComune})
             </h2>
@@ -40,10 +40,7 @@ export function AliquoteModal({
               ).sort();
 
               return (
-                <div
-                  key={yearIndex}
-                  className="mb-4 border rounded border-slate-800 p-2"
-                >
+                <div key={yearIndex} className="mb-4">
                   <h3 className="text-lg flex items-center justify-between font-semibold text-gray-700 mb-2">
                     <span>Anno: {year}</span>
                     <Button
@@ -60,44 +57,49 @@ export function AliquoteModal({
                     </Button>
                   </h3>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-4">
-                    {categorie.map((categoria, categoriaIndex) => (
-                      <div
-                        key={categoriaIndex}
-                        className="flex items-center gap-2 border rounded bg-slate-800 p-1 ps-2"
-                      >
-                        <label
-                          className="text-sm text-white font-semibold uppercase"
-                          style={{ lineHeight: "15px" }}
-                        >
-                          {categoria}
-                        </label>
-                        <input
-                          onFocus={(e) => e.target.select()}
-                          type="number"
-                          step="0.0001"
-                          min="0"
-                          className="w-full border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-800 bg-slate-100"
-                          value={
-                            typeof aliquote[codiceComune].years[year][
-                              categoria
-                            ] === "number"
-                              ? aliquote[codiceComune].years[year][categoria]
-                              : ""
-                          }
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const aliquoteCopy = structuredClone(aliquote);
+                  <table className="min-w-full border border-gray-300">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border font-semibold px-2 py-1">Categoria</th>
+                        <th className="border font-semibold px-2 py-1">Aliquota</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categorie.map((categoria, categoriaIndex) => (
+                        <tr key={categoriaIndex}>
+                          <td className="border px-2 py-1">{categoria}</td>
+                          <td className="border ">
+                            <input
+                              onFocus={(e) => e.target.select()}
+                              type="number"
+                              step="0.0001"
+                              min="0"
+                              className="w-full px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-800 bg-slate-100"
+                              value={
+                                typeof aliquote[codiceComune].years[year][
+                                  categoria
+                                ] === "number"
+                                  ? aliquote[codiceComune].years[year][
+                                      categoria
+                                    ]
+                                  : ""
+                              }
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const aliquoteCopy = structuredClone(aliquote);
 
-                            aliquoteCopy[codiceComune].years[year][categoria] =
-                              val === "" ? "" : (parseFloat(val) as any);
+                                aliquoteCopy[codiceComune].years[year][
+                                  categoria
+                                ] = val === "" ? "" : (parseFloat(val) as any);
 
-                            setAliquote(aliquoteCopy);
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                                setAliquote(aliquoteCopy);
+                              }}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               );
             })}
