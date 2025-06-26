@@ -6,9 +6,11 @@ import { CopyPopover } from "./CopyPopover";
 export function ImuTableComponent({
   imuData,
   minYear,
+  maxYear,
 }: {
   imuData: iImuYearData;
   minYear?: number;
+  maxYear?: number;
 }) {
   const sortedYears = Object.keys(imuData)
     .map(Number)
@@ -33,6 +35,7 @@ export function ImuTableComponent({
         <tbody>
           {sortedYears.map((year) => {
             if (minYear && year < minYear) return <></>;
+            if (maxYear && year > maxYear) return <></>;
 
             return (
               <tr key={year}>

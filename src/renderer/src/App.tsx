@@ -66,6 +66,7 @@ export default function App() {
   const [modalContent, setModalContent] = useState<ReactElement>();
   const [aliquote, setAliquote] = useState<iAliquoteComune>();
   const [minYear, setMinYear] = useState<number>();
+  const [maxYear, setMaxYear] = useState<number>();
   const [selectedFileId, setSelectedFileId] = useState<string>();
 
   const currentYear = new Date().getFullYear();
@@ -119,6 +120,7 @@ export default function App() {
         const json = JSON.parse(e.target?.result as string);
         if (json.aliquote) setAliquote(json.aliquote);
         if (json.minYear) setMinYear(json.minYear);
+        if (json.maxYear) setMaxYear(json.maxYear);
         if (json.droppedFiles) setDroppedFiles(json.droppedFiles);
       } catch (err) {
         console.error("Invalid restore file", err);
@@ -356,13 +358,7 @@ export default function App() {
           value={minYear?.toString()}
         >
           <SelectTrigger className="cursor-pointer">
-            {/* {minYear && (
-              <>
-                <span className="font-light">Dal</span>{" "}
-                <span className="font-semibold">{minYear}</span>
-              </>
-            )} */}
-            <SelectValue placeholder={"Filtra per anno"} />
+            <SelectValue placeholder={"Dal ..."} />
           </SelectTrigger>
           <SelectContent>
             {years.map((year) => (
@@ -377,6 +373,26 @@ export default function App() {
             ))}
           </SelectContent>
         </Select>
+        <Select
+          onValueChange={(val) => setMaxYear(Number(val))}
+          value={maxYear?.toString()}
+        >
+          <SelectTrigger className="cursor-pointer">
+            <SelectValue placeholder={"Al ..."} />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((year) => (
+              <SelectItem
+                className="cursor-pointer hover:bg-gray-100 p-1 text-sm"
+                key={year}
+                value={year.toString()}
+              >
+                <span className="font-light">Al</span>{" "}
+                <span className="font-semibold">{year}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Button
           onClick={() => {
@@ -385,6 +401,7 @@ export default function App() {
             setModalContent(
               <AliquoteModal
                 minYear={minYear}
+                maxYear={maxYear}
                 _setAliquote={(e) => {
                   setAliquote(e);
                   setModalContent(undefined);
@@ -452,7 +469,7 @@ export default function App() {
       </div>
 
       <div className="flex h-full overflow-hidden">
-        <div className="w-xs min-w-xs h-full p-2 border-r flex flex-col">
+        <div className="w-sm min-w-sm h-full p-2 border-r flex flex-col">
           <div className="flex flex-col justify-center mb-2 gap-3">
             {!!droppedFiles.find((e) => !!e.imuData) && (
               <Button size={"sm"} onClick={() => setSelectedFileId("all")}>
@@ -661,6 +678,7 @@ export default function App() {
               onSelect={(fileId) => setSelectedFileId(fileId)}
               droppedFiles={droppedFiles}
               minYear={minYear}
+              maxYear={maxYear}
               setModalContent={setModalContent}
             />
           )}
@@ -751,6 +769,7 @@ export default function App() {
                             </p>
                             <ImuTableComponent
                               minYear={minYear}
+                              maxYear={maxYear}
                               imuData={
                                 droppedFiles.find(
                                   (f) => f._id === selectedFileId

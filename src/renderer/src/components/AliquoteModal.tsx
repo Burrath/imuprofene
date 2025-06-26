@@ -7,10 +7,12 @@ export function AliquoteModal({
   _aliquote,
   _setAliquote,
   minYear,
+  maxYear,
 }: {
   _aliquote: iAliquoteComune;
   _setAliquote: (e: iAliquoteComune) => void;
   minYear?: number;
+  maxYear?: number;
 }) {
   const [aliquote, setAliquote] = useState<iAliquoteComune>(_aliquote);
 
@@ -29,6 +31,7 @@ export function AliquoteModal({
 
             {years.map((year, yearIndex) => {
               if (minYear && Number(year) < minYear) return <></>;
+              if (maxYear && Number(year) > maxYear) return <></>;
 
               const categorie = Object.keys(aliquote[comune][year]).sort();
 

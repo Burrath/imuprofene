@@ -13,11 +13,13 @@ import { Card, CardContent } from "./ui/card";
 export function ImuTableCombined({
   droppedFiles,
   minYear,
+  maxYear,
   onSelect,
   setModalContent,
 }: {
   droppedFiles: DroppedFile[];
   minYear?: number;
+  maxYear?: number;
   onSelect: (fileId: string) => void;
   setModalContent: (el: ReactElement) => void;
 }) {
@@ -96,6 +98,7 @@ export function ImuTableCombined({
 
     years.forEach((year) => {
       if (year && minYear && year < minYear) return;
+      if (year && maxYear && year > maxYear) return;
       report[year] = {};
 
       Object.entries(groupedByComune).forEach(([codiceComune, files]) => {
