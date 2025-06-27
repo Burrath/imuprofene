@@ -10,6 +10,7 @@ import {
   Flame,
   Globe,
   Linkedin,
+  List,
   Loader,
   Plus,
   Recycle,
@@ -46,6 +47,7 @@ import type { iF24 } from "./lib/visura/f24Interfaces";
 import parseDataFromF24RawData from "./lib/visura/f24Extract";
 import getRawFileType from "./lib/visura/fileExtract";
 import { F24Table } from "./components/F24Table";
+import Census from "./components/Census";
 
 export type DroppedFile = {
   _id: string;
@@ -487,12 +489,21 @@ export default function App() {
 
       <div className="flex h-full overflow-hidden">
         <div className="w-sm min-w-sm h-full p-2 border-r flex flex-col">
-          <div className="flex flex-col justify-center mb-2 gap-3">
+          <div className="flex flex-col justify-center mb-2 gap-1">
+            {!!droppedFiles.find((e) => !!e.refinedVisuraData) && (
+              <Button size={"sm"} onClick={() => setSelectedFileId("census")}>
+                Vedi il censimento <List />
+              </Button>
+            )}
             {!!droppedFiles.find((e) => !!e.imuData) && (
               <Button size={"sm"} onClick={() => setSelectedFileId("all")}>
                 Vedi i calcoli agglomerati <Calculator />
               </Button>
             )}
+
+            <br />
+            <hr />
+            <br />
 
             <Button
               size={"sm"}
@@ -696,6 +707,13 @@ export default function App() {
               droppedFiles={droppedFiles}
               minYear={minYear}
               maxYear={maxYear}
+              setModalContent={setModalContent}
+            />
+          )}
+
+          {selectedFileId === "census" && (
+            <Census
+              droppedFiles={droppedFiles}
               setModalContent={setModalContent}
             />
           )}

@@ -252,6 +252,7 @@ export function ImuTableCombined({
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="border px-2 py-1">File</th>
+                    <th className="border px-2 py-1">Unità</th>
                     <th className="border px-2 py-1">Categorie</th>
                     <th className="border px-2 py-1">IMU Anticipo</th>
                     <th className="border px-2 py-1">IMU Saldo</th>
@@ -284,6 +285,46 @@ export function ImuTableCombined({
                           >
                             <ArrowUpRight />
                           </Button>
+                        </td>
+
+                        <td className="border">
+                          {fileObj.refinedVisuraData?.situazioni && (
+                            <table className="text-xs w-full">
+                              <thead>
+                                <tr className="bg-gray-50">
+                                  <th className="border px-1 py-1">Foglio</th>
+                                  <th className="border px-1 py-1">
+                                    Particella
+                                  </th>
+                                  <th className="border px-1 py-1">Sub</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {[
+                                  ...new Map(
+                                    fileObj.refinedVisuraData.situazioni
+                                      .flatMap((s) => s.unità ?? [])
+                                      .map((u) => [
+                                        `${u.foglio}-${u.particella}-${u.sub}`,
+                                        u,
+                                      ])
+                                  ).values(),
+                                ].map((u, index) => (
+                                  <tr key={index}>
+                                    <td className="border px-1 py-1">
+                                      {u.foglio ?? ""}
+                                    </td>
+                                    <td className="border px-1 py-1">
+                                      {u.particella ?? ""}
+                                    </td>
+                                    <td className="border px-1 py-1">
+                                      {u.sub ?? ""}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
                         </td>
 
                         <td className="border px-2 py-1">
