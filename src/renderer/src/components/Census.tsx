@@ -5,6 +5,7 @@ import { ReactElement } from "react";
 import { Button } from "./ui/button";
 import { PdfModal } from "./PdfModal";
 import { Eye } from "lucide-react";
+import ExcelDownloadButton, { ExcelSheets } from "./ExcelDownloadButton";
 
 export default function Census({
   droppedFiles,
@@ -55,9 +56,25 @@ export default function Census({
 
   const rows = Array.from(uniqueUnitsMap.values());
 
+  const sheets: ExcelSheets = {};
+  sheets.censimento = rows.map((row) => {
+    return {
+      file: row.file.file?.name ?? "",
+      foglio: row.unità.foglio ?? "",
+      particella: row.unità.particella ?? "",
+      sub: row.unità.sub ?? "",
+      categorie: [...row.categorie].join(", "),
+      "Rendita - Dominicale - Venale": row.rendita,
+    };
+  });
+
   return (
     <div className="text-sm mt-4">
-      <h2 className="font-semibold text-lg mb-2">Censimento aggregato</h2>
+      <div className="flex">
+        <h2 className="font-semibold text-lg mb-2">Censimento immobili</h2>
+        <ExcelDownloadButton sheets={sheets} fileName="censimento.xlsx" />
+      </div>
+
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           <tr>
@@ -73,17 +90,19 @@ export default function Census({
           {rows.map((row, index) => (
             <tr key={index}>
               <td className="border px-2 py-1">
-                {row.file.file.name}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={!row.file.file.arrayBuffer}
-                  onClick={() =>
-                    setModalContent(<PdfModal pdf={row.file.file} />)
-                  }
-                >
-                  <Eye />
-                </Button>
+                {row.file.file?.name}
+                {!!row.file.file?.arrayBuffer && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={!row.file.file.arrayBuffer}
+                    onClick={() =>
+                      setModalContent(<PdfModal pdf={row.file.file!} />)
+                    }
+                  >
+                    <Eye />
+                  </Button>
+                )}
               </td>
               <td className="border px-2 py-1">{row.unità.foglio ?? ""}</td>
               <td className="border px-2 py-1">{row.unità.particella ?? ""}</td>

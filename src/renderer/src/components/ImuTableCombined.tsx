@@ -9,6 +9,10 @@ import { PdfModal } from "./PdfModal";
 
 import { CheckCircle, AlertTriangle, XCircle, HelpCircle } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
+import ExcelDownloadButton, {
+  ExcelRow,
+  ExcelSheets,
+} from "./ExcelDownloadButton";
 
 export function ImuTableCombined({
   droppedFiles,
@@ -156,8 +160,175 @@ export function ImuTableCombined({
     return <XCircle className="text-red-600 w-5 h-5" />;
   };
 
+  const generateSheetsData = (
+    reportData: ReturnType<typeof getReportData>,
+    visuraFiles: DroppedFile[],
+    f24Files: DroppedFile[],
+    years: number[]
+  ): ExcelSheets => {
+    const sheets: ExcelSheets = {};
+
+    // Foglio 1: GENERALE
+    const generalSheet: ExcelRow[] = [];
+
+    Object.entries(reportData).forEach(([year, comuni]) => {
+      Object.entries(comuni).forEach(([codiceComune, dati]) => {
+        generalSheet.push({
+          Anno: year,
+          Comune: dati.comune,
+          "Codice Comune": codiceComune,
+          "Visura Anticipo": dati.visuraAnticipo,
+          "Visura Saldo": dati.visuraSaldo,
+          "F24 Anticipo": dati.f24Anticipo,
+          "F24 Saldo": dati.f24Saldo,
+        });
+      });
+    });
+
+    sheets["Generale"] = generalSheet;
+
+    // Fogli per anno
+    years.forEach((year) => {
+      const righe: ExcelRow[] = [];
+
+      const filesForYear = visuraFiles.filter((file) => file.imuData?.[year]);
+      const groupedByComune: Record<string, DroppedFile[]> =
+        filesForYear.reduce(
+          (acc, file) => {
+            const codice =
+              file.refinedVisuraData?.codiceComune || "Comune sconosciuto";
+            if (!acc[codice]) acc[codice] = [];
+            acc[codice].push(file);
+            return acc;
+          },
+          {} as Record<string, DroppedFile[]>
+        );
+
+      Object.entries(groupedByComune).forEach(([codiceComune, files]) => {
+        const comune = files[0].refinedVisuraData?.comune ?? "";
+
+        files.forEach((file) => {
+          const imuData = file.imuData?.[year];
+          if (!imuData) return;
+
+          const unità = [
+            ...new Map(
+              (file.refinedVisuraData?.situazioni ?? [])
+                .flatMap((s) => s.unità ?? [])
+                .map((u) => [`${u.foglio}-${u.particella}-${u.sub}`, u])
+            ).values(),
+          ];
+
+          righe.push({
+            Comune: comune,
+            "Codice Comune": codiceComune,
+            File: file.file?.name ?? "",
+            "Categorie IMU": imuData.categorie?.join(" - ") || "",
+            "IMU Anticipo": imuData.imuAnticipo ?? "",
+            "IMU Saldo": imuData.imuSaldo ?? "",
+            "IMU Totale": imuData.imu ?? "",
+            "Unità (n)": unità.length,
+          });
+        });
+
+        // Totale visura per comune
+        righe.push({
+          Comune: comune,
+          "Codice Comune": codiceComune,
+          File: "Totale visura",
+          "IMU Anticipo": files.reduce(
+            (s, f) => s + (f.imuData?.[year]?.imuAnticipo ?? 0),
+            0
+          ),
+          "IMU Saldo": files.reduce(
+            (s, f) => s + (f.imuData?.[year]?.imuSaldo ?? 0),
+            0
+          ),
+          "IMU Totale": files.reduce(
+            (s, f) => s + (f.imuData?.[year]?.imu ?? 0),
+            0
+          ),
+        });
+
+        // F24
+        const f24 = f24Files
+          .filter((e) =>
+            e.f24Data?.voci?.some(
+              (v) =>
+                v.codice === codiceComune && v.periodo?.includes(String(year))
+            )
+          )
+          .map((file) => {
+            const filteredVoci = file.f24Data?.voci?.filter((v) =>
+              v.periodo?.includes(String(year))
+            );
+
+            return {
+              ...file,
+              f24Data: {
+                ...file.f24Data,
+                voci: filteredVoci,
+              },
+            };
+          });
+
+        f24.forEach((file) => {
+          (file.f24Data?.voci ?? []).forEach((voce) => {
+            righe.push({
+              Comune: comune,
+              "Codice Comune": codiceComune,
+              File: file.file?.name ?? "",
+              Causale: voce.causaleTributo ?? "",
+              Tipo: voce.estremi?.saldo
+                ? "SALDO"
+                : voce.estremi?.acc
+                  ? "ACCONTO"
+                  : "",
+              "Importo F24": voce.importoDebito ?? "",
+            });
+          });
+        });
+
+        // Totale F24 per comune
+        const f24Anticipo = f24
+          .flatMap((f) => f.f24Data?.voci ?? [])
+          .filter((v) => v.estremi?.acc)
+          .reduce((sum, v) => sum + (v.importoDebito ?? 0), 0);
+
+        const f24Saldo = f24
+          .flatMap((f) => f.f24Data?.voci ?? [])
+          .filter((v) => v.estremi?.saldo)
+          .reduce((sum, v) => sum + (v.importoDebito ?? 0), 0);
+
+        righe.push({
+          Comune: comune,
+          "Codice Comune": codiceComune,
+          File: "Totale F24",
+          "Importo F24 Anticipo": f24Anticipo,
+          "Importo F24 Saldo": f24Saldo,
+        });
+      });
+
+      if (righe.length > 0) {
+        sheets[`Anno ${year}`] = righe;
+      }
+    });
+
+    return sheets;
+  };
+
+  const sheets = generateSheetsData(reportData, visuraFiles, f24Files, years);
+
   return (
     <div className="text-sm w-full">
+      <div className="flex">
+        <h2 className="font-semibold text-lg mb-2">Calcoli agglomerati</h2>
+        <ExcelDownloadButton
+          sheets={sheets}
+          fileName="calcoli_agglomerati.xlsx"
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
         {Object.keys(reportData)
           .reverse()
@@ -265,19 +436,23 @@ export function ImuTableCombined({
                     if (!imuData) return null;
 
                     return (
-                      <tr key={fileObj.file.name}>
+                      <tr key={fileObj.file?.name}>
                         <td className="border px-2 py-1">
-                          {fileObj.file.name}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={!fileObj.file.arrayBuffer}
-                            onClick={() =>
-                              setModalContent(<PdfModal pdf={fileObj.file} />)
-                            }
-                          >
-                            <Eye />
-                          </Button>
+                          {fileObj.file?.name}
+                          {!!fileObj.file?.arrayBuffer && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={!fileObj.file?.arrayBuffer}
+                              onClick={() =>
+                                setModalContent(
+                                  <PdfModal pdf={fileObj.file!} />
+                                )
+                              }
+                            >
+                              <Eye />
+                            </Button>
+                          )}
                           <Button
                             variant={"ghost"}
                             size={"sm"}
@@ -441,19 +616,21 @@ export function ImuTableCombined({
                             return (
                               <tr key={key}>
                                 <td className="border px-2 py-1">
-                                  {fileObj.file.name}{" "}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={!fileObj.file.arrayBuffer}
-                                    onClick={() =>
-                                      setModalContent(
-                                        <PdfModal pdf={fileObj.file} />
-                                      )
-                                    }
-                                  >
-                                    <Eye />
-                                  </Button>
+                                  {fileObj.file?.name}{" "}
+                                  {!!fileObj.file?.arrayBuffer && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      disabled={!fileObj.file?.arrayBuffer}
+                                      onClick={() =>
+                                        setModalContent(
+                                          <PdfModal pdf={fileObj.file!} />
+                                        )
+                                      }
+                                    >
+                                      <Eye />
+                                    </Button>
+                                  )}
                                   <Button
                                     variant={"ghost"}
                                     size={"sm"}

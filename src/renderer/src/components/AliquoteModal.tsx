@@ -60,8 +60,12 @@ export function AliquoteModal({
                   <table className="min-w-full border border-gray-300">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="border font-semibold px-2 py-1">Categoria</th>
-                        <th className="border font-semibold px-2 py-1">Aliquota</th>
+                        <th className="border font-semibold px-2 py-1">
+                          Categoria
+                        </th>
+                        <th className="border font-semibold px-2 py-1">
+                          Aliquota
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -71,14 +75,14 @@ export function AliquoteModal({
                           <td className="border ">
                             <input
                               onFocus={(e) => e.target.select()}
-                              type="number"
-                              step="0.0001"
-                              min="0"
                               className="w-full px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-800 bg-slate-100"
                               value={
                                 typeof aliquote[codiceComune].years[year][
                                   categoria
-                                ] === "number"
+                                ] === "number" &&
+                                !Number.isNaN(
+                                  aliquote[codiceComune].years[year][categoria]
+                                )
                                   ? aliquote[codiceComune].years[year][
                                       categoria
                                     ]

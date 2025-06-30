@@ -3,7 +3,6 @@ import type { DragEvent, ChangeEvent, ReactElement } from "react";
 
 import {
   Calculator,
-  Download,
   Edit2,
   Eye,
   FileBox,
@@ -13,12 +12,9 @@ import {
   List,
   Loader,
   Plus,
-  Recycle,
-  Save,
   TriangleAlert,
   X,
 } from "lucide-react";
-import { Button } from "./components/ui/button";
 
 import {
   type iAliquoteComune,
@@ -49,15 +45,79 @@ import getRawFileType from "./lib/visura/fileExtract";
 import { F24Table } from "./components/F24Table";
 import Census from "./components/Census";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./components/ui/popover";
+import { Button } from "./components/ui/button";
+import { Download, Save, Recycle, MoreVertical } from "lucide-react";
+
 export type DroppedFile = {
   _id: string;
   rawFileType?: RAW_FILE_TYPE;
   fileType?: "f24" | "visura";
-  file: File;
+  file?: File;
   refinedVisuraData?: iVisura;
   imuData?: iImuYearData;
   f24Data?: iF24;
   isLoading: boolean;
+};
+
+interface ActionsPopoverProps {
+  restore: () => void;
+  save: () => void;
+  setDroppedFiles: (files: DroppedFile[]) => void;
+  setAliquote: (val: any) => void;
+}
+
+export const ActionsPopover: React.FC<ActionsPopoverProps> = ({
+  restore,
+  save,
+  setDroppedFiles,
+  setAliquote,
+}) => {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <MoreVertical />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="flex flex-col w-36 p-1">
+        <Button
+          className="justify-start"
+          onClick={save}
+          variant="ghost"
+          size="sm"
+        >
+          <Save />
+          Salva calcoli
+        </Button>
+        <Button
+          className="justify-start"
+          onClick={restore}
+          variant="ghost"
+          size="sm"
+        >
+          <Download />
+          Ripristina
+        </Button>
+        <Button
+          onClick={() => {
+            setDroppedFiles([]);
+            setAliquote(undefined);
+          }}
+          variant="ghost"
+          size="sm"
+          className="text-red-600 justify-start"
+        >
+          <Recycle />
+          Reset
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
 };
 
 export default function App() {
@@ -89,7 +149,7 @@ export default function App() {
           fileType: e.fileType,
           rawFileType: e.rawFileType,
           file: {
-            name: e.file.name,
+            name: e.file?.name,
           } as any,
         };
 
@@ -203,7 +263,8 @@ export default function App() {
       if (file.fileType === "f24" && file.f24Data) continue;
 
       // const rawData = await pdfToRawTextData(file.file)
-      const arraybuffer = await file.file.arrayBuffer();
+      const arraybuffer = await file.file?.arrayBuffer();
+      if (!arraybuffer) return;
       const rawData = await window.api.parsePdf(arraybuffer); // 👈 IPC CALL
 
       const rawFileType = getRawFileType(rawData);
@@ -437,37 +498,12 @@ export default function App() {
         </Button>
 
         <div className="flex ml-auto">
-          <Button
-            onClick={() => {
-              restore();
-            }}
-            size={"lg"}
-            className=""
-            variant={"ghost"}
-          >
-            <Download />
-          </Button>
-          <Button
-            onClick={() => {
-              save();
-            }}
-            size={"lg"}
-            className=""
-            variant={"ghost"}
-          >
-            <Save />
-          </Button>
-          <Button
-            onClick={() => {
-              setDroppedFiles([]);
-              setAliquote(undefined);
-            }}
-            size={"lg"}
-            className=" text-red-600"
-            variant={"ghost"}
-          >
-            <Recycle />
-          </Button>
+          <ActionsPopover
+            restore={restore}
+            save={save}
+            setDroppedFiles={setDroppedFiles}
+            setAliquote={setAliquote}
+          />
         </div>
       </nav>
 
@@ -547,7 +583,7 @@ export default function App() {
                             </Button>
 
                             <span className="text-nowrap truncate text-sm">
-                              {fileObj.file.name}
+                              {fileObj.file?.name}
                             </span>
 
                             {!droppedFiles.filter((e) => e.isLoading)
@@ -568,16 +604,20 @@ export default function App() {
                               </>
                             )}
 
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={!fileObj.file.arrayBuffer}
-                              onClick={() =>
-                                setModalContent(<PdfModal pdf={fileObj.file} />)
-                              }
-                            >
-                              <Eye />
-                            </Button>
+                            {!!fileObj.file?.arrayBuffer && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={!fileObj.file?.arrayBuffer}
+                                onClick={() =>
+                                  setModalContent(
+                                    <PdfModal pdf={fileObj.file!} />
+                                  )
+                                }
+                              >
+                                <Eye />
+                              </Button>
+                            )}
 
                             <div className="ml-auto flex">
                               {fileObj.isLoading && (
@@ -645,7 +685,7 @@ export default function App() {
                             </Button>
 
                             <span className="text-nowrap truncate text-sm">
-                              {fileObj.file.name}
+                              {fileObj.file?.name}
                             </span>
 
                             {!droppedFiles.filter((e) => e.isLoading)
@@ -664,16 +704,20 @@ export default function App() {
                               </>
                             )}
 
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={!fileObj.file.arrayBuffer}
-                              onClick={() =>
-                                setModalContent(<PdfModal pdf={fileObj.file} />)
-                              }
-                            >
-                              <Eye />
-                            </Button>
+                            {!!fileObj.file?.arrayBuffer && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={!fileObj.file?.arrayBuffer}
+                                onClick={() =>
+                                  setModalContent(
+                                    <PdfModal pdf={fileObj.file!} />
+                                  )
+                                }
+                              >
+                                <Eye />
+                              </Button>
+                            )}
 
                             <div className="ml-auto flex">
                               {fileObj.isLoading && (
@@ -748,28 +792,32 @@ export default function App() {
                               )!.refinedVisuraData!.codiceComune
                             }
                             )
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={
-                                !droppedFiles.find(
-                                  (f) => f._id === selectedFileId
-                                )!.file.arrayBuffer
-                              }
-                              onClick={() =>
-                                setModalContent(
-                                  <PdfModal
-                                    pdf={
-                                      droppedFiles.find(
-                                        (f) => f._id === selectedFileId
-                                      )!.file
-                                    }
-                                  />
-                                )
-                              }
-                            >
-                              <Eye />
-                            </Button>
+                            {!!droppedFiles.find(
+                              (f) => f._id === selectedFileId
+                            )!.file?.arrayBuffer && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={
+                                  !droppedFiles.find(
+                                    (f) => f._id === selectedFileId
+                                  )!.file?.arrayBuffer
+                                }
+                                onClick={() =>
+                                  setModalContent(
+                                    <PdfModal
+                                      pdf={
+                                        droppedFiles.find(
+                                          (f) => f._id === selectedFileId
+                                        )!.file!
+                                      }
+                                    />
+                                  )
+                                }
+                              >
+                                <Eye />
+                              </Button>
+                            )}
                           </p>
                         </div>
 
@@ -824,7 +872,7 @@ export default function App() {
                     <p className="font-semibold flex items-center">
                       {
                         droppedFiles.find((f) => f._id === selectedFileId)!.file
-                          .name
+                          ?.name
                       }{" "}
                       (Data versamento:{" "}
                       {new Date(
@@ -834,27 +882,30 @@ export default function App() {
                         )
                       ).toLocaleDateString("it-IT")}
                       )
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={
-                          !droppedFiles.find((f) => f._id === selectedFileId)!
-                            .file.arrayBuffer
-                        }
-                        onClick={() =>
-                          setModalContent(
-                            <PdfModal
-                              pdf={
-                                droppedFiles.find(
-                                  (f) => f._id === selectedFileId
-                                )!.file
-                              }
-                            />
-                          )
-                        }
-                      >
-                        <Eye />
-                      </Button>
+                      {!!droppedFiles.find((f) => f._id === selectedFileId)!
+                        .file?.arrayBuffer && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={
+                            !droppedFiles.find((f) => f._id === selectedFileId)!
+                              .file?.arrayBuffer
+                          }
+                          onClick={() =>
+                            setModalContent(
+                              <PdfModal
+                                pdf={
+                                  droppedFiles.find(
+                                    (f) => f._id === selectedFileId
+                                  )!.file!
+                                }
+                              />
+                            )
+                          }
+                        >
+                          <Eye />
+                        </Button>
+                      )}
                     </p>
 
                     <F24Table
