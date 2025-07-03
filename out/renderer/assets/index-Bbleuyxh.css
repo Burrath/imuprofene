@@ -572,6 +572,10 @@
     width: calc(var(--spacing) * 24);
   }
 
+  .w-36 {
+    width: calc(var(--spacing) * 36);
+  }
+
   .w-72 {
     width: calc(var(--spacing) * 72);
   }
@@ -687,6 +691,14 @@
 
   .justify-end {
     justify-content: flex-end;
+  }
+
+  .justify-start {
+    justify-content: flex-start;
+  }
+
+  .gap-1 {
+    gap: calc(var(--spacing) * 1);
   }
 
   .gap-1\.5 {
