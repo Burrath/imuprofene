@@ -20,6 +20,7 @@ export default function Census({
       unità: iUnitàVisura;
       categorie: Set<string>;
       rendita: number;
+      renditaData?: Date;
       file: DroppedFile;
     }
   >();
@@ -36,9 +37,14 @@ export default function Census({
           uniqueUnitsMap.set(key, {
             unità,
             categorie: new Set(),
-            rendita: 0,
+            rendita: situazione.rendita ?? 0,
+            renditaData: situazione.dal ? new Date(situazione.dal) : undefined,
             file: file,
           });
+          if (situazione.categoria) {
+            uniqueUnitsMap.get(key)!.categorie.add(situazione.categoria);
+          }
+          return;
         }
 
         const existing = uniqueUnitsMap.get(key)!;
@@ -47,8 +53,14 @@ export default function Census({
           existing.categorie.add(situazione.categoria);
         }
 
-        if (situazione.rendita) {
-          existing.rendita += situazione.rendita;
+        const nuovaData = situazione.dal ? new Date(situazione.dal) : undefined;
+
+        if (
+          nuovaData &&
+          (!existing.renditaData || nuovaData > existing.renditaData)
+        ) {
+          existing.rendita = situazione.rendita ?? 0;
+          existing.renditaData = nuovaData;
         }
       });
     });
@@ -57,7 +69,7 @@ export default function Census({
   const rows = Array.from(uniqueUnitsMap.values());
 
   const sheets: ExcelSheets = {};
-  sheets.censimento = rows.map((row) => {
+  sheets.perimetro = rows.map((row) => {
     return {
       file: row.file.file?.name ?? "",
       foglio: row.unità.foglio ?? "",
@@ -71,8 +83,11 @@ export default function Census({
   return (
     <div className="text-sm mt-4">
       <div className="flex">
-        <h2 className="font-semibold text-lg mb-2">Censimento immobili</h2>
-        <ExcelDownloadButton sheets={sheets} fileName="censimento.xlsx" />
+        <h2 className="font-semibold text-lg mb-2">Perimetro immobili</h2>
+        <ExcelDownloadButton
+          sheets={sheets}
+          fileName={`perimetro_${new Date().getTime()}.xlsx`}
+        />
       </div>
 
       <table className="min-w-full border border-gray-300">

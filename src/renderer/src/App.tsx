@@ -528,7 +528,7 @@ export default function App() {
           <div className="flex flex-col justify-center mb-2 gap-1">
             {!!droppedFiles.find((e) => !!e.refinedVisuraData) && (
               <Button size={"sm"} onClick={() => setSelectedFileId("census")}>
-                Vedi il censimento <List />
+                Vedi il perimetro <List />
               </Button>
             )}
             {!!droppedFiles.find((e) => !!e.imuData) && (

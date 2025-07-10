@@ -325,7 +325,7 @@ export function ImuTableCombined({
         <h2 className="font-semibold text-lg mb-2">Calcoli agglomerati</h2>
         <ExcelDownloadButton
           sheets={sheets}
-          fileName="calcoli_agglomerati.xlsx"
+          fileName={`calcoli_${new Date().getTime()}.xlsx`}
         />
       </div>
 
