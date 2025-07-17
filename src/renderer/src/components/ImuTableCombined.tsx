@@ -223,11 +223,30 @@ export function ImuTableCombined({
             Comune: comune,
             "Codice Comune": codiceComune,
             File: file.file?.name ?? "",
-            "Categorie IMU": imuData.categorie?.join(" - ") || "",
-            "IMU Anticipo": imuData.imuAnticipo ?? "",
-            "IMU Saldo": imuData.imuSaldo ?? "",
-            "IMU Totale": imuData.imu ?? "",
+            "Rendita - Dominicale - Venale":
+              Math.round(imuData.rendita * 100) / 100,
+            Aliquote:
+              imuData.aliquote
+                ?.map((a) => Math.round(a * 100) / 100)
+                .join(" - ") || "",
+            Categorie: imuData.categorie?.join(" - ") || "",
+            Coefficenti: imuData.coefficienti?.join(" - ") || "",
+            "Basi Imponibili":
+              imuData.basiImponibili
+                ?.map((e) => Math.round(e * 100) / 100)
+                .join(" - ") || "",
+            "IMU Anticipo":
+              imuData.imuAnticipo != null
+                ? Math.round(imuData.imuAnticipo * 100) / 100
+                : "",
+            "IMU Saldo":
+              imuData.imuSaldo != null
+                ? Math.round(imuData.imuSaldo * 100) / 100
+                : "",
+            "IMU Totale":
+              imuData.imu != null ? Math.round(imuData.imu * 100) / 100 : "",
             "Unità (n)": unità.length,
+            "Calcolo Spiegato": imuData.spiegazione ?? "",
           });
         });
 

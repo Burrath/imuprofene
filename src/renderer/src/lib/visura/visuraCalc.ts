@@ -97,6 +97,7 @@ export function getImuCalculation(
       imu: Math.round(imu * 100) / 100,
       categoria: "Terreno Edificabile",
       baseImponibile: valoreVenale,
+      spiegazione: `IMU = valore venale (€${valoreVenale}) x aliquota (${aliquota * 100}%)`,
     };
   }
 
@@ -108,6 +109,7 @@ export function getImuCalculation(
       imu: Math.round(imu * 100) / 100,
       categoria: "Terreno Agricolo",
       baseImponibile,
+      spiegazione: `Base imponibile = reddito dominicale (€${redditoDominicale}) x 1.25 x 135 = €${baseImponibile.toFixed(2)}. IMU = base imponibile x aliquota (${aliquota * 100}%)`,
     };
   }
 
@@ -143,11 +145,11 @@ export function getImuCalculation(
     const imu = baseImponibile * aliquota;
 
     return {
-      imu: imu,
-      tipo: "Immobile",
+      imu: Math.round(imu * 100) / 100,
       categoria: normalizedCategoria,
       coefficente: coeff,
       baseImponibile,
+      spiegazione: `Base imponibile = rendita catastale (€${rendita}) x 1.05 x coefficiente (${coeff}) = €${baseImponibile.toFixed(2)}. IMU = base imponibile x aliquota (${aliquota * 100}%)`,
     };
   }
 }
@@ -219,6 +221,8 @@ export function calculateImu(
       usedCategorie.push(imuCalc.categoria);
       if (imuCalc.coefficente) usedCoefficenti.push(imuCalc.coefficente);
       usedBaseImponibile.push(imuCalc.baseImponibile);
+
+      result[year].spiegazione = imuCalc.spiegazione;
     }
 
     result[year].basiImponibili = [...new Set(usedBaseImponibile)];

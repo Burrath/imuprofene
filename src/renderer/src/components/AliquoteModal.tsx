@@ -78,7 +78,7 @@ export function AliquoteModal({
                               type="number"
                               step="0.0001"
                               min="0"
-                              onWheel={(e) => e.preventDefault()}
+                              onWheel={(e) => (e.target as any).blur()}
                               className="w-full px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-800 bg-slate-100"
                               value={
                                 typeof aliquote[codiceComune].years[year][

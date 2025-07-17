@@ -56,5 +56,7 @@ export interface iImuYearData {
     imu?: number;
     imuAnticipo?: number;
     imuSaldo?: number;
+
+    spiegazione?: string;
   };
 }

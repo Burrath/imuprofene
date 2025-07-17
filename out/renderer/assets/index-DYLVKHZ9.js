@@ -21245,10 +21245,12 @@ function AliquoteModal({
                   "input",
                   {
                     onFocus: (e) => e.target.select(),
+                    type: "number",
+                    step: "0.0001",
+                    min: "0",
+                    onWheel: (e) => e.preventDefault(),
                     className: "w-full px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-800 bg-slate-100",
-                    value: typeof aliquote[codiceComune].years[year][categoria] === "number" && !Number.isNaN(
-                      aliquote[codiceComune].years[year][categoria]
-                    ) ? aliquote[codiceComune].years[year][categoria] : "",
+                    value: typeof aliquote[codiceComune].years[year][categoria] === "number" ? aliquote[codiceComune].years[year][categoria] : "",
                     onChange: (e) => {
                       const val = e.target.value;
                       const aliquoteCopy = structuredClone(aliquote);
@@ -42454,7 +42456,7 @@ function ImuTableCombined({
         ExcelDownloadButton,
         {
           sheets,
-          fileName: "calcoli_agglomerati.xlsx"
+          fileName: `calcoli_${(/* @__PURE__ */ new Date()).getTime()}.xlsx`
         }
       )
     ] }),
@@ -43017,23 +43019,30 @@ function Census({
           uniqueUnitsMap.set(key, {
             unità,
             categorie: /* @__PURE__ */ new Set(),
-            rendita: 0,
+            rendita: situazione.rendita ?? 0,
+            renditaData: situazione.dal ? new Date(situazione.dal) : void 0,
             file
           });
+          if (situazione.categoria) {
+            uniqueUnitsMap.get(key).categorie.add(situazione.categoria);
+          }
+          return;
         }
         const existing = uniqueUnitsMap.get(key);
         if (situazione.categoria) {
           existing.categorie.add(situazione.categoria);
         }
-        if (situazione.rendita) {
-          existing.rendita += situazione.rendita;
+        const nuovaData = situazione.dal ? new Date(situazione.dal) : void 0;
+        if (nuovaData && (!existing.renditaData || nuovaData > existing.renditaData)) {
+          existing.rendita = situazione.rendita ?? 0;
+          existing.renditaData = nuovaData;
         }
       });
     });
   });
   const rows = Array.from(uniqueUnitsMap.values());
   const sheets = {};
-  sheets.censimento = rows.map((row) => {
+  sheets.perimetro = rows.map((row) => {
     return {
       file: row.file.file?.name ?? "",
       foglio: row.unità.foglio ?? "",
@@ -43045,8 +43054,14 @@ function Census({
   });
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-sm mt-4", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "font-semibold text-lg mb-2", children: "Censimento immobili" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(ExcelDownloadButton, { sheets, fileName: "censimento.xlsx" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "font-semibold text-lg mb-2", children: "Perimetro immobili" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        ExcelDownloadButton,
+        {
+          sheets,
+          fileName: `perimetro_${(/* @__PURE__ */ new Date()).getTime()}.xlsx`
+        }
+      )
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { className: "min-w-full border border-gray-300", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { className: "bg-gray-100", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
@@ -43464,7 +43479,7 @@ function App() {
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-sm min-w-sm h-full p-2 border-r flex flex-col", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col justify-center mb-2 gap-1", children: [
               !!droppedFiles.find((e) => !!e.refinedVisuraData) && /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { size: "sm", onClick: () => setSelectedFileId("census"), children: [
-                "Vedi il censimento ",
+                "Vedi il perimetro ",
                 /* @__PURE__ */ jsxRuntimeExports.jsx(List, {})
               ] }),
               !!droppedFiles.find((e) => !!e.imuData) && /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { size: "sm", onClick: () => setSelectedFileId("all"), children: [
