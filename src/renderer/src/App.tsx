@@ -274,7 +274,9 @@ export default function App() {
       let refinedVisuraData: iVisura;
       if (
         rawFileType === RAW_FILE_TYPE.visura_v1 ||
-        rawFileType === RAW_FILE_TYPE.visura_v2
+        rawFileType === RAW_FILE_TYPE.visura_v2 ||
+        rawFileType === RAW_FILE_TYPE.visura_v3 ||
+        rawFileType === RAW_FILE_TYPE.visura_v4
       ) {
         refinedVisuraData = parseRawDataToSituazioniVisura(
           rawData,

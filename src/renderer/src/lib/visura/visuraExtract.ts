@@ -559,6 +559,160 @@ function getSituazioniFromRawDataV2(
   return situazioni.reverse();
 }
 
+function getSituazioniFromRawDataV3(
+  rawData: pdfToRawTextDataRes[]
+): iSituazioneVisura[] {
+  const situazioni: iSituazioneVisura[] = [];
+
+  const getRelevantSlots = (rawData: pdfToRawTextDataRes[]) => {
+    const recordIndex = rawData.findIndex((e) =>
+      e.text
+        .toLowerCase()
+        .includes("informazioni riportate negli atti del catasto")
+    );
+
+    if (recordIndex === -1) return [];
+
+    const reference = rawData[recordIndex];
+    const referenceHeight = reference.height;
+
+    // Cerca il secondo record con stesso height, dopo il primo
+    const secondIndexRelative = rawData
+      .slice(recordIndex + 1)
+      .findIndex(
+        (e) =>
+          e.height === referenceHeight &&
+          e.text.toLocaleLowerCase().includes("indirizzo")
+      );
+
+    // Calcola l'indice assoluto
+    const secondIndex =
+      secondIndexRelative !== -1
+        ? recordIndex + 1 + secondIndexRelative
+        : rawData.length;
+
+    // Prendi i record tra i due (escludendo primo e secondo)
+    const sRecords = rawData.slice(recordIndex, secondIndex);
+
+    return sRecords.filter((r) => r.text.trim());
+  };
+
+  const getDate = (sRecords: pdfToRawTextDataRes[]) => {
+    if (!sRecords.length) return;
+
+    const match = sRecords[0].text.match(/\d{2}\/\d{2}\/\d{4}/);
+    if (match) {
+      const [day, month, year] = match[0].split("/").map(Number);
+      const date = new Date(year, month - 1, day);
+      if (!isNaN(date.getTime())) return date;
+    }
+  };
+
+  const getCategoria = (sRecords: pdfToRawTextDataRes[]) => {
+    const catLineIndex = sRecords.findIndex(
+      (e) => e.text.toLowerCase().trim() === "categoria"
+    );
+    if (catLineIndex !== -1) {
+      const cat = sRecords[catLineIndex + 1].text;
+      return cat;
+    }
+  };
+
+  const getImmobileType = (
+    sRecords: pdfToRawTextDataRes[],
+    categoria?: string
+  ): IMMOBILE_TYPE => {
+    if (categoria) return IMMOBILE_TYPE.Fabbricato;
+
+    for (let i = 0; i < sRecords.length; i++) {
+      const record = sRecords[i];
+
+      if (record.text.toLowerCase().includes("dominicale"))
+        return IMMOBILE_TYPE.TerrenoAgricolo;
+    }
+
+    return IMMOBILE_TYPE.TerrenoEdificabile;
+  };
+
+  const getUnità = (sRecords: pdfToRawTextDataRes[]) => {
+    const unità: iUnitàVisura[] = [];
+
+    const linesY = sRecords
+      .filter((e) => e.text.toLowerCase().trim() === "foglio")
+      .map((e) => e.y);
+
+    linesY.forEach((y) => {
+      const lineRecords = sRecords.filter((e) => e.y === y);
+
+      const foglioIndex = lineRecords.findIndex(
+        (e) => e.text.toLowerCase().trim() === "foglio"
+      );
+      const foglio =
+        foglioIndex !== -1 ? lineRecords[foglioIndex + 1] : undefined;
+
+      const particellaIndex = lineRecords.findIndex(
+        (e) => e.text.toLowerCase().trim() === "particella"
+      );
+      const particella =
+        particellaIndex !== -1 ? lineRecords[particellaIndex + 1] : undefined;
+
+      const subalternoIndex = lineRecords.findIndex(
+        (e) => e.text.toLowerCase().trim() === "subalterno"
+      );
+      const subalterno =
+        subalternoIndex !== -1 ? lineRecords[subalternoIndex + 1] : undefined;
+
+      unità.push({
+        foglio: foglio?.text,
+        particella: particella?.text,
+        sub: subalterno?.text,
+      });
+    });
+
+    return unità;
+  };
+
+  const getRendita = (sRecords: pdfToRawTextDataRes[]) => {
+    const renditaRecord = sRecords.find((record) =>
+      record.text.toLowerCase().includes("euro")
+    );
+
+    if (renditaRecord) {
+      const rendita = parseFloat(
+        renditaRecord.text
+          .toLowerCase()
+          .replace("euro ", "")
+          .replace(/\./g, "") // rimuove tutti i punti
+          .replace(",", ".")
+      );
+
+      return isNaN(rendita) ? 0 : rendita;
+    }
+    return 0;
+  };
+
+  const relevantSlots = getRelevantSlots(rawData);
+  const date = getDate(relevantSlots);
+  const categoria = getCategoria(relevantSlots);
+  const immobileType = getImmobileType(relevantSlots, categoria);
+  const unità = getUnità(relevantSlots);
+  const rendita = getRendita(relevantSlots);
+
+  for (let i = 0; i < 5; i++) {
+    if (date)
+      situazioni.push({
+        dal: new Date(date.setFullYear(date.getFullYear() - 1)),
+        categoria,
+        immobileType,
+        type: SITUAZIONE_TYPE.RenditaValidata,
+        unità,
+        rendita,
+      });
+  }
+
+  return situazioni;
+}
+
 export function parseRawDataToSituazioniVisura(
   rawData: pdfToRawTextDataRes[],
   rawFileType: RAW_FILE_TYPE
@@ -575,6 +729,22 @@ export function parseRawDataToSituazioniVisura(
     const numero = getVisuraNumberFromRawDataV2(rawData);
     const { comune, codice } = getComuneAndCodiceFromRawDataV2(rawData);
     const situazioni = getSituazioniFromRawDataV2(rawData);
+
+    return { numero, situazioni, comune, codiceComune: codice };
+  }
+
+  if (rawFileType === RAW_FILE_TYPE.visura_v3) {
+    const numero = getVisuraNumberFromRawDataV2(rawData); // same as v2
+    const { comune, codice } = getComuneAndCodiceFromRawDataV2(rawData); // same as v2
+    const situazioni = getSituazioniFromRawDataV3(rawData);
+
+    return { numero, situazioni, comune, codiceComune: codice };
+  }
+
+  if (rawFileType === RAW_FILE_TYPE.visura_v4) {
+    const numero = getVisuraNumberFromRawDataV2(rawData); // same as v2
+    const { comune, codice } = getComuneAndCodiceFromRawDataV2(rawData); // same as v2
+    const situazioni = []; // TODO
 
     return { numero, situazioni, comune, codiceComune: codice };
   }
