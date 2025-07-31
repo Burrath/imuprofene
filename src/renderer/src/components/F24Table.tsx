@@ -137,7 +137,7 @@ export function F24Table({ f24 }: { f24: iF24 }) {
 
           {f24.voci?.length && f24.voci?.length > 1 ? (
             <tr className="bg-gray-50 font-bold">
-              <td colSpan={5} className="border px-2 py-1 text-right">
+              <td colSpan={4} className="border px-2 py-1 text-right">
                 Totali:
               </td>
               <td className="border px-2 py-1">

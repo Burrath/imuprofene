@@ -51,26 +51,60 @@ function extractF24Data_v1(rawData: pdfToRawTextDataRes[]): iF24 {
       (e) => e.y > titleRecord.y && e.avgX > e.startX && e.avgX < e.endX
     );
 
+    let date: Date;
+
+    // mode 1: date is in a single string
     for (let i = 0; i < recordsBelow.length; i++) {
       const e = recordsBelow[i];
-      if (e.text.length !== 8) continue;
 
-      const dateRecords = e.text.split("");
-      const day = dateRecords[0] + dateRecords[1];
-      const month = dateRecords[2] + dateRecords[3];
-      const year =
-        dateRecords[4] + dateRecords[5] + dateRecords[6] + dateRecords[7];
+      // @ts-ignore
+      if (!isNaN(date?.getTime())) continue;
 
-      const date = new Date(`${year}-${month}-${day}`);
+      if (e.text.length === 8) {
+        const dateRecords = e.text.split("");
+        const day = dateRecords[0] + dateRecords[1];
+        const month = dateRecords[2] + dateRecords[3];
+        const year =
+          dateRecords[4] + dateRecords[5] + dateRecords[6] + dateRecords[7];
 
-      if (!isNaN(date.getTime())) return date;
+        date = new Date(`${year}-${month}-${day}`);
+      }
     }
+
+    // @ts-ignore
+    if (!isNaN(date?.getTime())) return date;
+
+    let dateString = "";
+
+    // mode 2: date is split
+    for (let i = 0; i < recordsBelow.length; i++) {
+      const e = recordsBelow[i];
+
+      // @ts-ignore
+      if (!isNaN(date?.getTime())) continue;
+
+      if (
+        e.text.length === 1 &&
+        !isNaN(Number(e.text)) &&
+        dateString.length !== 8
+      )
+        dateString += e.text;
+    }
+
+    const day = dateString[0] + dateString[1];
+    const month = dateString[2] + dateString[3];
+    const year = dateString[4] + dateString[5] + dateString[6] + dateString[7];
+    date = new Date(`${year}-${month}-${day}`);
+
+    // @ts-ignore
+    if (!isNaN(date?.getTime())) return date;
   };
 
   const getVoci = (rawData: pdfToRawTextDataRes[]): iF24voce[] => {
     const imuTitleRecord = rawData.find(
       (e) =>
-        e.text.toLowerCase().trim() === "sezione imu e altri tributi locali"
+        e.text.toLowerCase().trim() === "sezione imu e altri tributi locali" ||
+        e.text.toLowerCase().trim() === "sezione ici ed altri tributi locali"
     );
 
     if (!imuTitleRecord) return [];
@@ -79,20 +113,20 @@ function extractF24Data_v1(rawData: pdfToRawTextDataRes[]): iF24 {
       (e) => e.y > imuTitleRecord.y && e.y < imuTitleRecord.y + 4.5
     );
 
-    const codiceRecords = getColumnData(relevantRecords, "codice comune", 0.8);
+    const codiceRecords = getColumnData(relevantRecords, "codice comune", 1.2);
 
-    const estremiRecords_ravv = getColumnData(relevantRecords, "ravv.", 0.4);
+    const estremiRecords_ravv = getColumnData(relevantRecords, "ravv.", 0.45);
     const estremiRecords_variati = getColumnData(
       relevantRecords,
       "variati",
       0.4
     );
-    const estremiRecords_acc = getColumnData(relevantRecords, "acc.", 0.4);
+    const estremiRecords_acc = getColumnData(relevantRecords, "acc.", 0.45);
     const estremiRecords_saldo = getColumnData(relevantRecords, "saldo", 0.45);
     const estremiRecords_immobili = getColumnData(
       relevantRecords,
       "immobili",
-      0.4
+      0.45
     );
 
     const tributoRecord = getColumnData(relevantRecords, "codice tributo", 1);
@@ -174,7 +208,8 @@ function extractF24Data_v1(rawData: pdfToRawTextDataRes[]): iF24 {
           .replace(",", ".") ?? 0
       );
 
-      voci.push(voce);
+      if (!isNaN(voce.importoCredito) && !isNaN(voce.importoDebito))
+        voci.push(voce);
     });
 
     return voci;
